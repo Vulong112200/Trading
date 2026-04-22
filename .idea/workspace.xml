@@ -6,13 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="All success_1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/signal_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/signal_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,12 +36,12 @@
     &quot;assignee&quot;: &quot;Vulong112200&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Vulong112200/Trading.git&quot;,
-    &quot;accountId&quot;: &quot;1270e5a7-d051-4c8a-a24d-e707060bf571&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Vulong112200/Trading.git",
+    "accountId": "19b0db55-f329-4834-9611-46dc428d80a1"
   }
-}</component>
+}]]></component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -114,7 +115,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776878138928</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="All success_1">
+      <option name="closed" value="true" />
+      <created>1776878418217</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1776878418218</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -1,0 +1,1 @@
+{"time": "2026-04-23T05:00:00", "symbol": "ETHUSDT", "predict_direction": "BEARISH", "range": {"min": 2378.63, "max": 2386.27}, "actual_price": 2401.96, "hit_range": false, "correct_direction": false, "final_result": "LOSS", "indicators_snapshot": {"RSI": 50, "EMA_9": 2393.18, "EMA_21": 2376.56, "MACD": -1.059}, "volatility_atr": 4.78}

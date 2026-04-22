@@ -1,0 +1,1 @@
+{"time": "2026-04-23T05:00:00", "symbol": "BNBUSDT", "predict_direction": "BEARISH", "range": {"min": 642.19, "max": 644.25}, "actual_price": 641.47, "hit_range": false, "correct_direction": true, "final_result": "PARTIAL", "indicators_snapshot": {"RSI": 50, "EMA_9": 645.09, "EMA_21": 641.64, "MACD": 0.1431}, "volatility_atr": 1.29}

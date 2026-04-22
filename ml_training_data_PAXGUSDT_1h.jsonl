@@ -1,0 +1,1 @@
+{"time": "2026-04-23T05:00:00", "symbol": "PAXGUSDT", "predict_direction": "BEARISH", "range": {"min": 4706.16, "max": 4721.27}, "actual_price": 4730.64, "hit_range": false, "correct_direction": false, "final_result": "LOSS", "indicators_snapshot": {"RSI": 50, "EMA_9": 4727.02, "EMA_21": 4733.67, "MACD": -1.5287}, "volatility_atr": 9.44}

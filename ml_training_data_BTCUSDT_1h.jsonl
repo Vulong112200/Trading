@@ -1,0 +1,1 @@
+{"time": "2026-04-23T05:00:00", "symbol": "BTCUSDT", "predict_direction": "BULLISH", "range": {"min": 78949.67, "max": 79201.85}, "actual_price": 78736.02, "hit_range": false, "correct_direction": false, "final_result": "LOSS", "indicators_snapshot": {"RSI": 50, "EMA_9": 78588.39, "EMA_21": 77900.05, "MACD": 62.9827}, "volatility_atr": 157.61}
