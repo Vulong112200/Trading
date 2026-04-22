@@ -29,7 +29,6 @@
         .info-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; align-items: center;}
         .info-label { color: #848E9C; }
 
-        /* CSS cho bảng chú thích trên Chart */
         .chart-legend {
             position: absolute; top: 12px; left: 12px; z-index: 10;
             font-size: 13px; background: rgba(19, 23, 34, 0.85);
@@ -136,10 +135,7 @@
         <div class="metric">
             <h3>Live Forward Testing</h3>
             <table id="tracker-table" style="font-size: 13px; text-align: center; width: 100%;">
-                <tr style="color: #848E9C;">
-                    <th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th>
-                </tr>
-            </table>
+                </table>
         </div>
     </div>
 
@@ -215,8 +211,8 @@
 
                         document.getElementById('legend-dynamic').innerHTML = `
                             <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
-                            <br><span style="color:#2962FF">EMA 9: ${res.candle.EMA_9.toFixed(2)}</span>
-                            <br><span style="color:#FF6D00">EMA 21: ${res.candle.EMA_21.toFixed(2)}</span>
+                            <br><span style="color:#2962FF">EMA 9: ${(res.candle.EMA_9 || 0).toFixed(2)}</span>
+                            <br><span style="color:#FF6D00">EMA 21: ${(res.candle.EMA_21 || 0).toFixed(2)}</span>
                         `;
 
                         if (window.myTrade.state !== 'NONE') {
@@ -229,8 +225,10 @@
                             pnlEl.className = pnl > 0 ? 'val-green' : 'val-red';
                         }
 
+                        // LẤY DỮ LIỆU TỪ BACKEND
                         const dataSignal = res.signal;
-                        if (dataSignal && dataSignal.prediction) {
+
+                        if (dataSignal && dataSignal.prediction && dataSignal.prediction.target_mid > 0) {
                             const intervalFactor = document.getElementById('intervalSelect').value === '1m' ? 60 : 300;
                             const futureTime = localTime + (intervalFactor * 5);
                             predictionSeries.setData([
@@ -246,7 +244,9 @@
                         document.getElementById('price').innerText = currentPrice.toFixed(2);
 
                         if (dataSignal) {
-                            const sig = dataSignal.signal;
+                            // SỬA LỖI BUG UI TẠI ĐÂY: Không lồng "dataSignal.signal" nữa
+                            const sig = dataSignal;
+
                             document.getElementById('action').innerText = sig.action;
                             document.getElementById('action').className = sig.action.includes('BUY') ? 'score-buy' : (sig.action.includes('SELL') ? 'score-sell' : 'score-hold');
                             document.getElementById('score').innerText = sig.score;
@@ -271,11 +271,12 @@
                                 etaEl.className = "";
                             }
 
-                            const pred = dataSignal.prediction;
-                            document.getElementById('pred-target').innerText = pred.target_mid.toFixed(2);
-                            document.getElementById('pred-range').innerText = `${pred.range_min.toFixed(2)} - ${pred.range_max.toFixed(2)}`;
+                            if(sig.prediction){
+                                document.getElementById('pred-target').innerText = sig.prediction.target_mid.toFixed(2);
+                                document.getElementById('pred-range').innerText = `${sig.prediction.range.min.toFixed(2)} - ${sig.prediction.range.max.toFixed(2)}`;
+                            }
 
-                            // SỬA LỖI ĐỌC DỮ LIỆU TRACKER TẠI ĐÂY
+                            // RENDER BẢNG TRACKER TỪ MẢNG RECENT_RESULTS (Được fix lỗi trống)
                             const trackerList = dataSignal.tracker;
                             if (trackerList && trackerList.length > 0) {
                                 let tHtml = `<tr style="color: #848E9C;"><th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
@@ -292,6 +293,8 @@
                                     </tr>`;
                                 });
                                 document.getElementById('tracker-table').innerHTML = tHtml;
+                            } else {
+                                document.getElementById('tracker-table').innerHTML = `<tr style="color: #848E9C;"><th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th></tr><tr><td colspan="5" style="padding: 10px;">Waiting for first evaluation (5 candles)...</td></tr>`;
                             }
                         }
                     } catch (err) {
