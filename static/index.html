@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pro Quant Trading Terminal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #D9D9D9; margin: 0; padding: 20px; display: flex; gap: 20px; }
+        .header-controls { margin-bottom: 15px; display: flex; gap: 15px; }
+        select, input, button { background: #1E222D; color: white; border: 1px solid #474D57; padding: 8px; border-radius: 4px; font-size: 14px; outline: none; }
+        button { cursor: pointer; font-weight: bold; transition: 0.2s;}
+        button:hover { background: #2B3139; }
+        .btn-long { border-color: #00FF00; color: #00FF00; }
+        .btn-short { border-color: #FF0000; color: #FF0000; }
+        .btn-clear { border-color: #FFA500; color: #FFA500; }
+
+        #chart-container { flex: 3; height: 85vh; border: 1px solid #2B3139; background: #131722; position: relative; border-radius: 6px; overflow: hidden;}
+        #panel { flex: 1; background: #131722; padding: 20px; border-radius: 6px; border: 1px solid #2B3139; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: 85vh; box-sizing: border-box;}
+        h2, h3 { margin-top: 0; color: #E0E0E0; border-bottom: 1px solid #2B3139; padding-bottom: 10px; }
+        .metric { background: #1E222D; padding: 15px; border-radius: 6px; border: 1px solid #2B3139; }
+
+        .score-buy { color: #00FF00; font-weight: bold; font-size: 22px;}
+        .score-sell { color: #FF0000; font-weight: bold; font-size: 22px;}
+        .score-hold { color: #FFA500; font-weight: bold; font-size: 22px;}
+
+        .price-text { font-size: 28px; font-weight: bold; color: #FCD535; margin-top: 5px; }
+        .val-green { color: #00FF00; font-weight: bold; }
+        .val-red { color: #FF0000; font-weight: bold; }
+        .val-yellow { color: #FCD535; font-weight: bold; }
+        .info-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; align-items: center;}
+        .info-label { color: #848E9C; }
+
+        /* CSS cho bảng chú thích trên Chart */
+        .chart-legend {
+            position: absolute; top: 12px; left: 12px; z-index: 10;
+            font-size: 13px; background: rgba(19, 23, 34, 0.85);
+            padding: 10px; border-radius: 6px; border: 1px solid #2B3139;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .legend-static {
+            margin-top: 10px; font-size: 12px; border-top: 1px solid #474D57;
+            padding-top: 8px; line-height: 1.6; color: #B0C4DE;
+        }
+    </style>
+</head>
+<body>
+    <div style="flex: 3; display: flex; flex-direction: column;">
+        <div class="header-controls">
+            <select id="symbolSelect">
+                <option value="BTCUSDT">BTC / USDT</option>
+                <option value="ETHUSDT">ETH / USDT</option>
+                <option value="BNBUSDT">BNB / USDT</option>
+                <option value="PAXGUSDT">PAXG / USDT (Gold Proxy)</option>
+            </select>
+            <select id="intervalSelect">
+                <option value="1m">1 Minute</option>
+                <option value="5m">5 Minutes</option>
+            </select>
+            <span id="ws-status" style="margin-top: 8px; color: #FFA500; font-weight: bold;">Connecting WS...</span>
+        </div>
+        <div id="chart-container">
+            <div class="chart-legend">
+                <div id="legend-dynamic">
+                    <span style="color: #FFA500;">Loading Data...</span>
+                </div>
+                <div class="legend-static">
+                    <span style="color:#2962FF; font-weight:bold;">── EMA 9:</span> Tín hiệu Nhanh<br>
+                    <span style="color:#FF6D00; font-weight:bold;">── EMA 21:</span> Tín hiệu Chậm (Xu hướng)<br>
+                    <span style="color:#B228FF; font-weight:bold;">- - Target:</span> AI Dự phóng giá mục tiêu
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel">
+        <h2>System Terminal</h2>
+
+        <div class="metric">
+            <div class="info-label">Current Price</div>
+            <div class="price-text" id="price">Loading...</div>
+        </div>
+
+        <div class="metric">
+            <h3>My Manual Position</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="number" id="manual-entry" placeholder="Entry Price" style="width: 100px;">
+                <button class="btn-long" onclick="setManualTrade('LONG')">LONG</button>
+                <button class="btn-short" onclick="setManualTrade('SHORT')">SHORT</button>
+                <button class="btn-clear" onclick="setManualTrade('NONE')">CLEAR</button>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Current State:</span>
+                <strong id="my-state">NONE</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Live PnL:</span>
+                <strong id="my-pnl" style="font-size: 18px;">0.00%</strong>
+            </div>
+        </div>
+
+        <div class="metric">
+            <h3>Bot Signal Engine</h3>
+            <div class="info-row">
+                <span class="info-label">Action:</span>
+                <span id="action" class="score-hold">WAITING...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Score (EMA Smooth):</span>
+                <strong id="score">0.0</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Est. Time to Entry:</span>
+                <strong id="eta-entry" style="color: #848E9C;">Calculating...</strong>
+            </div>
+            <div class="info-row" style="flex-direction: column; margin-top: 12px;">
+                <span class="info-label">AI Reason:</span>
+                <span id="reason" style="color: #B0C4DE; margin-top: 4px; font-style: italic;">"Warming up data..."</span>
+            </div>
+        </div>
+
+        <div class="metric">
+            <h3>Volatility Prediction</h3>
+            <div class="info-row">
+                <span class="info-label">Trend Direction:</span>
+                <strong id="pred-dir" style="font-size: 16px;">UNKNOWN</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Target (Mid):</span>
+                <strong id="pred-target" style="color:#B228FF;">N/A</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Expected Range:</span>
+                <span id="pred-range">N/A - N/A</span>
+            </div>
+        </div>
+
+        <div class="metric">
+            <h3>Live Forward Testing</h3>
+            <table id="tracker-table" style="font-size: 13px; text-align: center; width: 100%;">
+                <tr style="color: #848E9C;">
+                    <th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createChart, CandlestickSeries, LineSeries, CrosshairMode } from 'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.mjs';
+
+        const tzOffsetSeconds = new Date().getTimezoneOffset() * 60;
+
+        const chart = createChart(document.getElementById('chart-container'), {
+            layout: { background: { type: 'solid', color: '#131722' }, textColor: '#D9D9D9' },
+            grid: { vertLines: { color: '#2B3139' }, horzLines: { color: '#2B3139' } },
+            crosshair: { mode: CrosshairMode.Normal },
+            timeScale: { timeVisible: true, secondsVisible: false }
+        });
+
+        const candleSeries = chart.addSeries(CandlestickSeries, { upColor: '#26a69a', downColor: '#ef5350', borderVisible: false });
+        const ema9Series = chart.addSeries(LineSeries, { color: '#2962FF', lineWidth: 1.5 });
+        const ema21Series = chart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1.5 });
+        const predictionSeries = chart.addSeries(LineSeries, { color: '#B228FF', lineWidth: 2, lineStyle: 2 });
+
+        window.myTrade = { state: 'NONE', entry: 0 };
+        window.setManualTrade = function(state) {
+            const entryVal = parseFloat(document.getElementById('manual-entry').value);
+            if (state !== 'NONE' && (isNaN(entryVal) || entryVal <= 0)) {
+                alert("Vui lòng nhập giá Entry hợp lệ!"); return;
+            }
+            window.myTrade.state = state;
+            window.myTrade.entry = state === 'NONE' ? 0 : entryVal;
+
+            const stateEl = document.getElementById('my-state');
+            stateEl.innerText = state;
+            stateEl.className = state === 'LONG' ? 'val-green' : (state === 'SHORT' ? 'val-red' : '');
+
+            if (state === 'NONE') {
+                document.getElementById('manual-entry').value = "";
+                document.getElementById('my-pnl').innerText = "0.00%";
+                document.getElementById('my-pnl').className = "";
+            }
+        };
+
+        let ws;
+        function connectWS() {
+            ws = new WebSocket(`ws://${window.location.host}/ws/frontend`);
+
+            ws.onopen = () => {
+                document.getElementById('ws-status').innerText = '🟢 SERVER ONLINE';
+                document.getElementById('ws-status').style.color = '#00FF00';
+                requestData();
+            };
+
+            ws.onmessage = (event) => {
+                const res = JSON.parse(event.data);
+
+                if (res.type === "FULL_LOAD") {
+                    try {
+                        const localData = res.data.map(d => ({...d, time: d.time - tzOffsetSeconds}));
+                        candleSeries.setData(localData);
+                        ema9Series.setData(localData.map(d => ({time: d.time, value: d.EMA_9})));
+                        ema21Series.setData(localData.map(d => ({time: d.time, value: d.EMA_21})));
+                        predictionSeries.setData([]);
+
+                        document.getElementById('legend-dynamic').innerHTML = `<strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | Sync Complete`;
+                    } catch (e) {}
+                }
+                else if (res.type === "TICK") {
+                    try {
+                        const currentPrice = res.candle.close;
+                        const localTime = res.candle.time - tzOffsetSeconds;
+
+                        candleSeries.update({...res.candle, time: localTime});
+                        ema9Series.update({time: localTime, value: res.candle.EMA_9});
+                        ema21Series.update({time: localTime, value: res.candle.EMA_21});
+
+                        document.getElementById('legend-dynamic').innerHTML = `
+                            <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
+                            <br><span style="color:#2962FF">EMA 9: ${res.candle.EMA_9.toFixed(2)}</span>
+                            <br><span style="color:#FF6D00">EMA 21: ${res.candle.EMA_21.toFixed(2)}</span>
+                        `;
+
+                        if (window.myTrade.state !== 'NONE') {
+                            let pnl = 0;
+                            if (window.myTrade.state === 'LONG') pnl = (currentPrice - window.myTrade.entry) / window.myTrade.entry * 100;
+                            if (window.myTrade.state === 'SHORT') pnl = (window.myTrade.entry - currentPrice) / window.myTrade.entry * 100;
+
+                            const pnlEl = document.getElementById('my-pnl');
+                            pnlEl.innerText = pnl.toFixed(2) + "%";
+                            pnlEl.className = pnl > 0 ? 'val-green' : 'val-red';
+                        }
+
+                        const dataSignal = res.signal;
+                        if (dataSignal && dataSignal.prediction) {
+                            const intervalFactor = document.getElementById('intervalSelect').value === '1m' ? 60 : 300;
+                            const futureTime = localTime + (intervalFactor * 5);
+                            predictionSeries.setData([
+                                { time: localTime, value: currentPrice },
+                                { time: futureTime, value: dataSignal.prediction.target_mid }
+                            ]);
+
+                            const predDirEl = document.getElementById('pred-dir');
+                            predDirEl.innerText = dataSignal.prediction.direction;
+                            predDirEl.className = dataSignal.prediction.direction === "BULLISH" ? "val-green" : "val-red";
+                        }
+
+                        document.getElementById('price').innerText = currentPrice.toFixed(2);
+
+                        if (dataSignal) {
+                            const sig = dataSignal.signal;
+                            document.getElementById('action').innerText = sig.action;
+                            document.getElementById('action').className = sig.action.includes('BUY') ? 'score-buy' : (sig.action.includes('SELL') ? 'score-sell' : 'score-hold');
+                            document.getElementById('score').innerText = sig.score;
+                            document.getElementById('reason').innerText = `"${sig.reason}"`;
+
+                            const absScore = Math.abs(sig.score);
+                            const etaEl = document.getElementById('eta-entry');
+                            const is1m = document.getElementById('intervalSelect').value === '1m';
+
+                            if (sig.action === "BUY" || sig.action === "SELL") {
+                                etaEl.innerText = "Order Triggered!";
+                                etaEl.className = "val-green";
+                            } else if (absScore >= 0.35) {
+                                etaEl.innerText = "Confirming (Wait 1-3 candles)";
+                                etaEl.className = "val-yellow";
+                            } else if (absScore >= 0.20) {
+                                etaEl.innerText = is1m ? "Approaching (Wait 3-10 mins)" : "Approaching (Wait 15-45 mins)";
+                                etaEl.className = "val-green";
+                            } else {
+                                etaEl.innerText = "Sideways Market (> 15 mins)";
+                                etaEl.style.color = "#848E9C";
+                                etaEl.className = "";
+                            }
+
+                            const pred = dataSignal.prediction;
+                            document.getElementById('pred-target').innerText = pred.target_mid.toFixed(2);
+                            document.getElementById('pred-range').innerText = `${pred.range_min.toFixed(2)} - ${pred.range_max.toFixed(2)}`;
+
+                            // SỬA LỖI ĐỌC DỮ LIỆU TRACKER TẠI ĐÂY
+                            const trackerList = dataSignal.tracker;
+                            if (trackerList && trackerList.length > 0) {
+                                let tHtml = `<tr style="color: #848E9C;"><th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
+                                trackerList.forEach(item => {
+                                    let resColor = item.result === 'WIN' ? 'color: #00FF00' : (item.result === 'LOSS' ? 'color: #FF0000' : 'color: #FFA500');
+                                    let dirColor = item.type === 'BULLISH' ? 'color: #00FF00' : 'color: #FF0000';
+
+                                    tHtml += `<tr>
+                                        <td>${item.time}</td>
+                                        <td style="${dirColor}">${item.type.substring(0,4)}</td>
+                                        <td>${item.target}</td>
+                                        <td>${item.actual}</td>
+                                        <td style="${resColor}; font-weight: bold;">${item.result}</td>
+                                    </tr>`;
+                                });
+                                document.getElementById('tracker-table').innerHTML = tHtml;
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Lỗi Render UI: ", err);
+                    }
+                }
+            };
+            ws.onclose = () => { setTimeout(connectWS, 2000); };
+        }
+
+        function requestData() {
+            if(ws && ws.readyState === WebSocket.OPEN) {
+                const sym = document.getElementById('symbolSelect').value;
+                const tf = document.getElementById('intervalSelect').value;
+
+                document.getElementById('legend-dynamic').innerHTML = `<span style="color: #FFA500;">Switching to ${sym}...</span>`;
+                ws.send(JSON.stringify({action: "subscribe", symbol: sym, interval: tf}));
+            }
+        }
+        document.getElementById('symbolSelect').addEventListener('change', requestData);
+        document.getElementById('intervalSelect').addEventListener('change', requestData);
+
+        connectWS();
+    </script>
+</body>
+</html>
