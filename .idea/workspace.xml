@@ -4,20 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="First commit">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/quant_trading_tool.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/quant_trading_tool.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="All success_1">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/signal_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/signal_engine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
     </list>
@@ -113,7 +106,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776847970613</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="All success_1">
+      <option name="closed" value="true" />
+      <created>1776878138928</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1776878138928</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -135,7 +136,8 @@
       <path value="$PROJECT_DIR$/.." />
     </ignored-roots>
     <MESSAGE value="First commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="First commit" />
+    <MESSAGE value="All success_1" />
+    <option name="LAST_COMMIT_MESSAGE" value="All success_1" />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>

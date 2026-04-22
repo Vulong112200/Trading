@@ -138,6 +138,15 @@ class AdvancedSignalEngine:
         val = series if isinstance(series, (float, int)) else series.iloc[-1]
         return float(val) if pd.notna(val) and val != 0 else default
 
+    def _tf_to_seconds(self, tf_str: str) -> int:
+        """Chuyển đổi chuỗi Timeframe thành Giây"""
+        val = int(tf_str[:-1])
+        unit = tf_str[-1]
+        if unit == 'm': return val * 60
+        if unit == 'h': return val * 3600
+        if unit == 'd': return val * 86400
+        return 60
+
     def generate_signal(self, df: pd.DataFrame):
         # 1. KHỞI TẠO ĐỐI TƯỢNG PHẢN HỒI (Giá trị mặc định để UI không crash)
         res = {
@@ -256,8 +265,11 @@ class AdvancedSignalEngine:
 
         # 8. LƯU DỰ ĐOÁN (Chỉ lấy khi chuyển nến mới)
         if self.last_candle_time != current_time_sec:
+            # Tính toán chính xác thời gian của 5 nến tiếp theo dựa trên khung giờ hiện tại
+            tf_seconds = self._tf_to_seconds(self.interval)
+
             self.scorer.register_prediction({
-                "target_time_sec": current_time_sec + (60 * 5),
+                "target_time_sec": current_time_sec + (tf_seconds * 5),  # Đã Sửa ở đây
                 "start_price": current_price,
                 "direction": pred_dir,
                 "range_min": res["prediction"]["range"]["min"],
