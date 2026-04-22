@@ -134,7 +134,7 @@ class AdvancedSignalEngine:
         """
         # 1. KH?I T?O ??I T??NG PH?N H?I M?C ??NH (Ng?n l?i undefined/N/A)
         res = {
-            "action": "WAITING...",
+            "action": "HOLD",
             "score": 0.0,
             "confidence": 0.0,
             "reason": "Initializing system...",
@@ -256,15 +256,18 @@ class AdvancedSignalEngine:
         }
 
         # ??ng k? d? ?o?n v?o b? ch?m ?i?m (ch? ??ng k? khi c? n?n m?i)
+        # L?u d? b?o ?? ch?m ?i?m (Ph?i ??m b?o c? ??y ?? key ?? kh?ng crash)
         candle_ts = int(curr['timestamp'].timestamp())
         if self.last_candle_time != candle_ts:
             self.scorer.register_prediction({
-                "target_time_sec": candle_ts + (60 * 5),  # D? b?o ??ch ??n sau 5 ph?t
+                "target_time_sec": candle_ts + (60 * 5),
                 "start_price": current_price,
                 "direction": res["prediction"]["direction"],
                 "range_min": res["prediction"]["range"]["min"],
                 "range_max": res["prediction"]["range"]["max"],
-                "raw_signals": raw_sigs
+                "raw_signals": raw_sigs,
+                "indicators_snapshot": indicators,  # TH?M D?NG N?Y ?? H?T L?I
+                "atr_snapshot": round(atr, 2)  # TH?M D?NG N?Y ?? ?? D? LI?U
             })
             self.last_candle_time = candle_ts
 
