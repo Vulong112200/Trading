@@ -48,7 +48,7 @@
                 <option value="BTCUSDT">BTC / USDT</option>
                 <option value="ETHUSDT">ETH / USDT</option>
                 <option value="BNBUSDT">BNB / USDT</option>
-                <option value="PAXGUSDT">PAXG / USDT</option>
+                <option value="PAXGUSDT">PAXG / USDT (GOLD)</option>
             </select>
             <select id="intervalSelect">
                 <option value="1m">1 Minute</option>
@@ -189,7 +189,6 @@
         const ema21Series = chart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1.5 });
         const predictionSeries = chart.addSeries(LineSeries, { color: '#B228FF', lineWidth: 2, lineStyle: 2 });
 
-        // Biến lưu trữ các đường vẽ (Price Lines) trên Chart
         let entryLine = null;
         let tpLine = null;
         let slLine = null;
@@ -209,6 +208,11 @@
 
                 if (res.type === "FULL_LOAD") {
                     try {
+                        // BẢN VÁ: Xóa ngay các đường kẽ lệnh cũ khi vừa Load cặp mới
+                        if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
+                        if (tpLine) { candleSeries.removePriceLine(tpLine); tpLine = null; }
+                        if (slLine) { candleSeries.removePriceLine(slLine); slLine = null; }
+
                         const localData = res.data.map(d => ({...d, time: d.time - tzOffsetSeconds}));
                         candleSeries.setData(localData);
                         ema9Series.setData(localData.map(d => ({time: d.time, value: d.EMA_9})));
@@ -221,18 +225,37 @@
                         const currentPrice = res.candle.close;
                         const localTime = res.candle.time - tzOffsetSeconds;
 
-                        // Cập nhật nến và EMA liên tục
                         candleSeries.update({...res.candle, time: localTime});
-                        ema9Series.update({time: localTime, value: res.candle.EMA_9});
-                        ema21Series.update({time: localTime, value: res.candle.EMA_21});
                         document.getElementById('price').innerText = currentPrice.toFixed(2);
 
                         const payload = res.signal;
 
                         if (payload) {
-                            // XỬ LÝ NOTIFICATIONS (TOAST)
+                            // Cập nhật Line Chỉ báo (Lấy từ payload.indicators để đảm bảo Realtime)
+                            if (payload.indicators) {
+                                const i_ema9 = payload.indicators.EMA_9;
+                                const i_ema21 = payload.indicators.EMA_21;
+
+                                ema9Series.update({time: localTime, value: i_ema9});
+                                ema21Series.update({time: localTime, value: i_ema21});
+
+                                document.getElementById('legend-dynamic').innerHTML = `
+                                    <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
+                                    <br><span style="color:#2962FF">EMA 9: ${i_ema9.toFixed(2)}</span>
+                                    <br><span style="color:#FF6D00">EMA 21: ${i_ema21.toFixed(2)}</span>
+                                `;
+                            }
+
+                            // Notification (Toast)
                             if (payload.notifications && payload.notifications.length > 0) {
-                                const toastContainer = document.getElementById('toast-container');
+                                let toastContainer = document.getElementById('toast-container');
+                                if (!toastContainer) {
+                                    toastContainer = document.createElement('div');
+                                    toastContainer.id = 'toast-container';
+                                    toastContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+                                    document.body.appendChild(toastContainer);
+                                }
+
                                 payload.notifications.forEach(msg => {
                                     const toast = document.createElement('div');
                                     toast.className = 'toast';
@@ -240,15 +263,15 @@
                                     toast.innerText = msg;
                                     toastContainer.appendChild(toast);
 
-                                    // Tự động xóa thông báo sau 6 giây
                                     setTimeout(() => {
                                         toast.style.opacity = '0';
+                                        toast.style.transition = 'opacity 0.3s ease';
                                         setTimeout(() => toast.remove(), 300);
                                     }, 6000);
                                 });
                             }
 
-                            // Cập nhật tia dự phóng
+                            // Prediction Range
                             if (payload.prediction && payload.prediction.mid_price) {
                                 const intervalStr = document.getElementById('intervalSelect').value;
                                 let seconds = 60;
@@ -266,14 +289,12 @@
                                 dirEl.className = payload.prediction.direction === "BULL" || payload.prediction.direction === "BULLISH" ? "val-green" : "val-red";
 
                                 document.getElementById('pred-target').innerText = payload.prediction.mid_price.toFixed(2);
-
-                                // Parse object an toàn
                                 let rObj = payload.prediction.range;
                                 let rangeTxt = typeof rObj === 'object' ? `${rObj.min.toFixed(2)} - ${rObj.max.toFixed(2)}` : rObj;
                                 document.getElementById('pred-range').innerText = `[${rangeTxt}]`;
                             }
 
-                            // Cập nhật Master Signal Engine
+                            // Signal Engine Core UI
                             const actEl = document.getElementById('action');
                             actEl.innerText = payload.action || payload.signal;
                             actEl.className = actEl.innerText.includes('BUY') ? 'score-buy' : (actEl.innerText.includes('SELL') ? 'score-sell' : 'score-hold');
@@ -281,13 +302,9 @@
                             if (payload.score !== undefined) document.getElementById('score').innerText = payload.score.toFixed(3);
                             if (payload.confidence !== undefined) document.getElementById('confidence').innerText = (payload.confidence * 100).toFixed(1) + "%";
                             if (payload.reason) document.getElementById('reason').innerText = payload.reason;
+                            if (payload.winrate !== undefined) document.getElementById('winrate').innerText = payload.winrate + "%";
 
-                            // Cập nhật Win Rate
-                            if (payload.winrate !== undefined) {
-                                document.getElementById('winrate').innerText = payload.winrate + "%";
-                            }
-
-                            // Cập nhật Adaptive Weights
+                            // Weights Progress Bar
                             if (payload.weights) {
                                 let wHtml = "";
                                 for (const [key, val] of Object.entries(payload.weights)) {
@@ -306,10 +323,9 @@
                                 document.getElementById('weights-container').innerHTML = wHtml;
                             }
 
-                            // CẬP NHẬT: Trade Engine & Quản Lý Vốn
+                            // Trade Execution Engine
                             const trade = payload.trade;
                             if (trade) {
-                                // Vốn (Capital)
                                 if (trade.capital !== undefined) {
                                     document.getElementById('trade-capital').innerText = trade.capital.toFixed(2) + " $";
                                 }
@@ -323,11 +339,8 @@
                                 document.getElementById('trade-entry').innerText = trade.entry ? trade.entry.toFixed(2) : "---";
                                 document.getElementById('trade-tp').innerText = trade.tp ? trade.tp.toFixed(2) : "---";
                                 document.getElementById('trade-sl').innerText = trade.sl ? trade.sl.toFixed(2) : "---";
-
-                                // Khối lượng (Size)
                                 document.getElementById('trade-size').innerText = trade.position_size > 0 ? trade.position_size.toFixed(5) : "---";
 
-                                // Live Profit ($)
                                 const profitEl = document.getElementById('trade-profit');
                                 if (trade.position_status !== 'NONE' && trade.profit_usd !== undefined) {
                                     let sign = trade.profit_usd >= 0 ? "+" : "";
@@ -338,7 +351,7 @@
                                     profitEl.className = "";
                                 }
 
-                                // Logic vẽ đường kẻ ngang trên Chart
+                                // Vẽ lệnh trên Chart
                                 if (trade.position_status !== 'NONE' && trade.entry) {
                                     if (!entryLine) entryLine = candleSeries.createPriceLine({price: trade.entry, color: '#FCD535', lineWidth: 2, title: 'ENTRY'});
                                     else entryLine.applyOptions({price: trade.entry});
@@ -352,68 +365,68 @@
                                         else slLine.applyOptions({price: trade.sl});
                                     }
                                 } else {
-                                    // Xóa lines nếu không có lệnh
                                     if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
                                     if (tpLine) { candleSeries.removePriceLine(tpLine); tpLine = null; }
                                     if (slLine) { candleSeries.removePriceLine(slLine); slLine = null; }
                                 }
                             }
 
-                            // Render Trade History Table (Đã thêm cột Profit $)
-                            if (payload.trade_history && payload.trade_history.length > 0) {
+                            // BẢN VÁ: Trade History (Fix rác bảng khi đổi Symbol)
+                            if (payload.trade_history) {
                                 let hHtml = `<tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>`;
-                                payload.trade_history.forEach(h => {
-                                    let col = h.result === "WIN" ? "val-green" : (h.result === "LOSS" ? "val-red" : "");
-                                    let typeCol = h.position === "LONG" || h.type === "LONG" ? "val-green" : "val-red";
-                                    let posText = h.position || h.type || "---";
-                                    let profitText = h.profit_usd ? (h.profit_usd > 0 ? '+' : '') + h.profit_usd.toFixed(2) + '$' : '---';
+                                if (payload.trade_history.length > 0) {
+                                    payload.trade_history.forEach(h => {
+                                        let col = h.result === "WIN" ? "val-green" : (h.result === "LOSS" ? "val-red" : "");
+                                        let typeCol = h.position === "LONG" || h.type === "LONG" ? "val-green" : "val-red";
+                                        let posText = h.position || h.type || "---";
+                                        let profitText = h.profit_usd ? (h.profit_usd > 0 ? '+' : '') + h.profit_usd.toFixed(2) + '$' : '---';
 
-                                    hHtml += `<tr>
-                                        <td class="${typeCol}">${posText.substring(0,4)}</td>
-                                        <td>${h.entry_price ? h.entry_price.toFixed(1) : h.entry.toFixed(1)}</td>
-                                        <td>${h.exit_price ? h.exit_price.toFixed(1) : '---'}</td>
-                                        <td class="${col}">${h.pnl ? h.pnl.toFixed(2) : 0.00}%</td>
-                                        <td class="${col}">${profitText}</td>
-                                        <td class="${col}">${h.result}</td>
-                                    </tr>`;
-                                });
+                                        hHtml += `<tr>
+                                            <td class="${typeCol}">${posText.substring(0,4)}</td>
+                                            <td>${h.entry_price ? h.entry_price.toFixed(1) : h.entry.toFixed(1)}</td>
+                                            <td>${h.exit_price ? h.exit_price.toFixed(1) : '---'}</td>
+                                            <td class="${col}">${h.pnl ? h.pnl.toFixed(2) : 0.00}%</td>
+                                            <td class="${col}">${profitText}</td>
+                                            <td class="${col}">${h.result}</td>
+                                        </tr>`;
+                                    });
+                                } else {
+                                    hHtml += `<tr><td colspan="6" style="color:#848E9C; padding-top:10px;">No closed trades yet</td></tr>`;
+                                }
                                 document.getElementById('trade-history-table').innerHTML = hHtml;
                             }
 
-                            // Cập nhật UI Bảng 4: Tracker (Forward Testing)
-                            const trackerList = payload.tracker;
-                            if (trackerList && trackerList.length > 0) {
+                            // BẢN VÁ: Tracker Forward Testing (Fix rác bảng khi đổi Symbol)
+                            if (payload.tracker) {
                                 let tHtml = `<tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
-                                trackerList.forEach(item => {
-                                    let timeStr = item.time;
-                                    if (timeStr.includes("T")) {
-                                        let dateObj = new Date(timeStr);
-                                        timeStr = dateObj.getHours().toString().padStart(2, '0') + ":" + dateObj.getMinutes().toString().padStart(2, '0');
-                                    }
+                                if (payload.tracker.length > 0) {
+                                    payload.tracker.forEach(item => {
+                                        let timeStr = item.time;
+                                        if (timeStr.includes("T")) {
+                                            let dateObj = new Date(timeStr);
+                                            timeStr = dateObj.getHours().toString().padStart(2, '0') + ":" + dateObj.getMinutes().toString().padStart(2, '0');
+                                        }
 
-                                    let resColor = item.final_result === 'WIN' ? '#00FF00' : (item.final_result === 'LOSS' ? '#FF0000' : '#FFA500');
-                                    let dirColor = item.direction.includes('BULL') ? '#00FF00' : '#FF0000';
+                                        let resColor = item.final_result === 'WIN' ? '#00FF00' : (item.final_result === 'LOSS' ? '#FF0000' : '#FFA500');
+                                        let dirColor = item.direction.includes('BULL') ? '#00FF00' : '#FF0000';
 
-                                    let rangeTxt = typeof item.range === 'object' ? `${item.range.min.toFixed(1)} - ${item.range.max.toFixed(1)}` : item.range;
-                                    let actTxt = item.actual_price > 0 ? item.actual_price.toFixed(2) : "---";
+                                        let rangeTxt = typeof item.range === 'object' ? `${item.range.min.toFixed(1)} - ${item.range.max.toFixed(1)}` : item.range;
+                                        let actTxt = item.actual_price > 0 ? item.actual_price.toFixed(2) : "---";
 
-                                    tHtml += `<tr>
-                                        <td>${timeStr}</td>
-                                        <td style="color:${dirColor}">${item.direction}</td>
-                                        <td>${rangeTxt}</td>
-                                        <td>${actTxt}</td>
-                                        <td style="color:${resColor}; font-weight: bold;">${item.final_result}</td>
-                                    </tr>`;
-                                });
+                                        tHtml += `<tr>
+                                            <td>${timeStr}</td>
+                                            <td style="color:${dirColor}">${item.direction}</td>
+                                            <td>${rangeTxt}</td>
+                                            <td>${actTxt}</td>
+                                            <td style="color:${resColor}; font-weight: bold;">${item.final_result}</td>
+                                        </tr>`;
+                                    });
+                                } else {
+                                    tHtml += `<tr><td colspan="5" style="color:#848E9C; padding-top:10px;">Waiting for first evaluation...</td></tr>`;
+                                }
                                 document.getElementById('tracker-table').innerHTML = tHtml;
                             }
 
-                            // Cập nhật Dynamic Legend
-                            document.getElementById('legend-dynamic').innerHTML = `
-                                <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
-                                <br><span style="color:#2962FF">EMA 9: ${(res.candle.EMA_9 || 0).toFixed(2)}</span>
-                                <br><span style="color:#FF6D00">EMA 21: ${(res.candle.EMA_21 || 0).toFixed(2)}</span>
-                            `;
                         }
                     } catch (err) {
                         console.error("Render Update Failed: ", err);

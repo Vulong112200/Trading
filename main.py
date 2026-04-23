@@ -31,53 +31,38 @@ engines = {
 
 # --- CALLBACK X? L? D? LI?U T? WEBSOCKET BINANCE ---
 async def on_market_tick(symbol: str, interval: str, is_closed: bool, tick_data: dict):
-    """
-    tick_data = {"time": int, "open": float, "high": float, "low": float, "close": float}
-    """
+    # 1. L?y d? li?u t? RAM Cache
+    df_raw = data_manager.cache.get(symbol, {}).get(interval)
+    if df_raw is None or df_raw.empty: return
+
+    # 2. T?nh Indicator
+    df_ind = indicator_layer.apply_indicators(df_raw)
+
+    mtf_context = {}
+    for tf in ("1m", "5m", "15m"):
+        df_tf = data_manager.cache.get(symbol, {}).get(tf)
+        if df_tf is not None and not df_tf.empty:
+            mtf_context[tf] = indicator_layer.apply_indicators(df_tf)
+
     engine_key = f"{symbol}_{interval}"
     engine = engines.get(engine_key)
     if not engine: return
 
-    # 1. CONTINUOUS EXECUTION: Qu?t r?u n?n m?i tick ?? check TP/SL ngay l?p t?c
-    trade_status = engine.trade_sim.process_tick(
-        current_price=tick_data['close'],
-        high=tick_data['high'],
-        low=tick_data['low']
-    )
-
-    # 2. EVENT-DRIVEN PREDICTION: CH? ch?y khi N?N ??NG C?A (1m, 5m, 1h...)
-    if not is_closed:
-        # N?u n?n ch?a ??ng, ch? g?i tr?ng th?i trade/gi? hi?n t?i xu?ng UI ?? c?p nh?t chart
-        await connection_manager.broadcast_to_symbol(json.dumps({
-            "type": "TICK_UPDATE",
-            "candle": tick_data,
-            "trade": trade_status
-        }), symbol, interval)
-        return
-
-    # === T? ??Y TR? XU?NG CH? CH?Y 1 L?N/N?N ===
-
-    # T?nh Indicator
-    df_raw = data_manager.cache.get(symbol, {}).get(interval)
-    df_ind = indicator_layer.apply_indicators(df_raw)
-
-    # L?y Multi-Timeframe Context
-    mtf_context = {}
-    for tf in ["1m", "5m", "15m", "1h", "4h"]:  # L?y ?? c?c TF
-        df_tf = data_manager.cache.get(symbol, {}).get(tf)
-        if df_tf is not None and len(df_tf) > 0:
-            mtf_context[tf] = indicator_layer.apply_indicators(df_tf)
-
-    # Sinh T?n Hi?u & Ghi Log
+    # ====================================================================
+    # ? FIX QUAN TR?NG: G?I H?M N?Y TR?N T?NG TICK (M?I GI?Y)
+    # L?i engine ?? t? c? t??ng l?a, n? s? t? update PnL v? ch?t n?n chu?n
+    # ====================================================================
     analysis = engine.generate_signal(df_ind, mtf_context)
 
-    # Broadcast xu?ng UI
-    await connection_manager.broadcast_to_symbol(json.dumps({
-        "type": "CANDLE_CLOSE",
+    # 3. Broadcast d? li?u xu?ng Frontend (Kh?ng c?n quan t?m n?n ??ng/m?)
+    message = json.dumps({
+        "type": "TICK",
         "symbol": symbol,
         "candle": tick_data,
         "signal": analysis
-    }), symbol, interval)
+    })
+
+    await connection_manager.broadcast_to_symbol(message, symbol, interval)
 
 
 # G?n callback v?o data_manager

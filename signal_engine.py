@@ -20,9 +20,12 @@ class AdaptiveScorer:
         self.timeframe = timeframe
         self.weights = {'EMA': 1.0, 'MACD': 1.0, 'RSI': 1.0, 'BB': 1.0, 'VWAP': 1.0, 'MTF': 1.5}
         self.pending_predictions = {}
-        self.recent_results = []  # Lưu 10 kết quả cho Tracker UI
+        self.recent_results = []
         self.ml_log_file = f"ml_training_data_{self.symbol}_{self.timeframe}.jsonl"
         self.stats = {"win": 0, "loss": 0, "partial": 0}
+
+        # Cờ đảo ngược tín hiệu nếu model đang dự báo sai quá nhiều
+        self.reverse_mode = False
 
         self._load_and_train_from_history()
 
@@ -31,13 +34,9 @@ class AdaptiveScorer:
             with open(self.ml_log_file, "w") as f: pass
             return
 
-        logger.info(f"[{self.symbol}-{self.timeframe}] Warming up model from ML history...")
         try:
             with open(self.ml_log_file, "r") as f:
                 lines = f.readlines()
-
-            valid_records = 0
-            loaded_results = []
 
             for line in lines[-500:]:
                 if not line.strip(): continue
@@ -49,7 +48,6 @@ class AdaptiveScorer:
 
                 if not raw_sigs or not res: continue
 
-                # 1. Update stats
                 if res == "WIN":
                     self.stats["win"] += 1
                 elif res == "LOSS":
@@ -57,34 +55,35 @@ class AdaptiveScorer:
                 elif res == "PARTIAL":
                     self.stats["partial"] += 1
 
-                # 2. Khôi phục Trọng số
-                factor = 1.0 if res == "WIN" else (0.5 if res == "PARTIAL" else -1.0)
+                # Tối ưu lại tốc độ học để weight không bị dồn cục
+                factor = 1.0 if res == "WIN" else (0.3 if res == "PARTIAL" else -0.8)
                 for ind, val in raw_sigs.items():
                     if ind in self.weights:
                         is_correct = (val > 0 and "BULL" in direction) or (val < 0 and "BEAR" in direction)
-                        if is_correct: self.weights[ind] *= (1 + (0.02 * factor))
-                        self.weights[ind] = max(0.1, min(3.0, self.weights[ind]))
+                        if is_correct: self.weights[ind] *= (1 + (0.01 * factor))
+                        self.weights[ind] = max(0.2, min(2.5, self.weights[ind]))
 
-                # 3. Load 10 records cho UI Forward Testing
                 time_str = data["time"]
-                if "T" in time_str:
-                    time_str = datetime.fromisoformat(time_str).strftime('%H:%M:%S')
+                if "T" in time_str: time_str = datetime.fromisoformat(time_str).strftime('%H:%M:%S')
 
-                loaded_results.insert(0, {
-                    "time": time_str,
-                    "direction": direction,
+                self.recent_results.insert(0, {
+                    "time": time_str, "direction": direction,
                     "range": f"{data['prediction']['range']['min']:.2f} - {data['prediction']['range']['max']:.2f}",
-                    "actual_price": data.get("actual_price", 0),
-                    "final_result": res
+                    "actual_price": data.get("actual_price", 0), "final_result": res
                 })
-                valid_records += 1
 
-            self.recent_results = loaded_results[:10]  # Lấy 10 dòng gần nhất
-
-            if valid_records > 0:
-                logger.info(f"Loaded {valid_records} ML records. WinRate: {self.get_winrate()}%")
+            self.recent_results = self.recent_results[:10]
+            self._check_reverse_mode()
         except Exception as e:
             logger.error(f"ML history load error: {e}")
+
+    def _check_reverse_mode(self):
+        """Nếu dạo gần đây toàn LOSS, hãy đánh ngược lại"""
+        total = self.stats["win"] + self.stats["loss"]
+        if total > 20 and self.get_winrate() < 40.0:
+            self.reverse_mode = True
+        elif total > 20 and self.get_winrate() >= 45.0:
+            self.reverse_mode = False
 
     def get_weights(self):
         total = sum(self.weights.values())
@@ -116,30 +115,28 @@ class AdaptiveScorer:
                 else:
                     self.stats["partial"] += 1
 
-                # ML Learning từ Dự báo
-                factor = 1.0 if result == "WIN" else (0.5 if result == "PARTIAL" else -1.0)
+                self._check_reverse_mode()
+
+                # Tối ưu lại mức phạt để model không bị "tuyệt vọng"
+                factor = 1.0 if result == "WIN" else (0.3 if result == "PARTIAL" else -0.8)
                 for ind, val in p['raw_signals'].items():
                     is_correct = (val > 0 and direction.startswith("BULL")) or (
                                 val < 0 and direction.startswith("BEAR"))
                     if is_correct: self.weights[ind] *= (1 + (0.05 * factor))
-                    self.weights[ind] = max(0.1, min(3.0, self.weights[ind]))
+                    self.weights[ind] = max(0.2, min(2.5, self.weights[ind]))
 
-                tracker_entry = {
+                self.recent_results.insert(0, {
                     "time": datetime.fromtimestamp(target_time).strftime('%H:%M:%S'),
-                    "direction": direction,
-                    "range": f"{p['range']['min']:.2f} - {p['range']['max']:.2f}",
-                    "actual_price": round(closed_price, 2),
-                    "final_result": result
-                }
-                self.recent_results.insert(0, tracker_entry)
-                self.recent_results = self.recent_results[:10]  # Giữ 10 record
+                    "direction": direction, "range": f"{p['range']['min']:.2f} - {p['range']['max']:.2f}",
+                    "actual_price": round(closed_price, 2), "final_result": result
+                })
+                self.recent_results = self.recent_results[:10]
 
                 log_entry = {
                     "time": datetime.fromtimestamp(target_time).isoformat(),
                     "symbol": self.symbol, "timeframe": self.timeframe,
                     "prediction": {"direction": direction, "range": p['range'], "confidence": p['confidence']},
-                    "signal": p['signal'], "score": p['score'],
-                    "raw_signals": p['raw_signals'],
+                    "signal": p['signal'], "score": p['score'], "raw_signals": p['raw_signals'],
                     "indicators_snapshot": p['indicators_snapshot'],
                     "actual_price": round(closed_price, 4), "result": result
                 }
@@ -153,32 +150,32 @@ class AdaptiveScorer:
         for k in resolved: del self.pending_predictions[k]
 
     def learn_from_real_trade(self, snapshot: dict, direction: str, result: str):
-        """HỌC TỪ TRADE THẬT SỰ (Đóng lệnh chạm TP/SL)"""
-        factor = 1.0 if result == "WIN" else -1.0
+        """Học trực tiếp từ Trade để nắn lại Trọng số nhanh hơn"""
+        factor = 1.2 if result == "WIN" else -1.0
         for ind, val in snapshot.items():
             is_correct = (val > 0 and direction == "LONG") or (val < 0 and direction == "SHORT")
-            if is_correct: self.weights[ind] *= (1 + (0.08 * factor))  # Trọng số học từ Trade thật cao hơn (8%)
-            self.weights[ind] = max(0.1, min(3.0, self.weights[ind]))
+            if is_correct: self.weights[ind] *= (1 + (0.05 * factor))
+            self.weights[ind] = max(0.2, min(2.5, self.weights[ind]))
 
     def get_winrate(self):
         total = self.stats["win"] + self.stats["loss"]
-        return round((self.stats["win"] / total) * 100, 2) if total > 0 else 0.0
+        return round((self.stats["win"] / total) * 100, 1) if total > 0 else 0.0
 
 
 # ==========================================
-# 2. REAL TRADE SIMULATOR (QUẢN LÝ VỐN CHUẨN)
+# 2. REAL TRADE SIMULATOR (DYNAMIC TP/SL)
 # ==========================================
 class TradeSimulator:
-    def __init__(self, symbol: str, timeframe: str, capital=100.0, risk_pct=0.02):
+    def __init__(self, symbol: str, timeframe: str, capital=100.0, risk_pct=0.015):
         self.symbol = symbol
         self.timeframe = timeframe
         self.capital = capital
-        self.risk_pct = risk_pct
+        self.risk_pct = risk_pct  # Đã giảm Risk xuống 1.5% để sống sót tốt hơn ở khung nhỏ
         self.state = "NONE"
         self.trade = {}
         self.history = []
         self.cooldown = 0
-        self.just_opened = False  # Fix Bug khớp lệnh ngay tức thì
+        self.just_opened = False
         self.notifications = []
 
         self.trade_log_file = f"trade_history_{self.symbol}_{self.timeframe}.jsonl"
@@ -192,32 +189,31 @@ class TradeSimulator:
         try:
             with open(self.trade_log_file, "r") as f:
                 lines = f.readlines()
-                for line in lines[-10:]:  # Load 10 lệnh lên UI
+                for line in lines[-10:]:
                     if not line.strip(): continue
                     data = json.loads(line)
                     self.history.insert(0, data)
-
-                # Khôi phục vốn từ lệnh cuối cùng
-                if self.history:
-                    self.capital = self.history[0].get("capital_after", self.capital)
-            logger.info(f"[{self.symbol}] Loaded trade history. Capital: {self.capital:.2f}$")
+                if self.history: self.capital = self.history[0].get("capital_after", self.capital)
         except Exception as e:
-            logger.error(f"Trade load error: {e}")
+            pass
 
-    def open_position(self, timestamp: str, side: str, price: float, atr: float, indicators_snap: dict):
+    def open_position(self, timestamp: str, side: str, price: float, atr: float, bb_edge: float, indicators_snap: dict):
         if self.state != "NONE" or self.cooldown > 0: return
 
         self.state = "LONG" if side == "BUY" else "SHORT"
 
-        # Risk Management: Sizing
-        sl_dist = max(atr * 1.5, price * 0.0005)  # Đảm bảo không chia cho 0
-        tp_dist = atr * 3.0
+        # DYNAMIC TP/SL: Không dùng số nhân cố định, mà kéo dãn theo rào cản tự nhiên (Bollinger Bands)
+        if self.state == "LONG":
+            sl = min(price - atr * 1.5, bb_edge)  # SL đặt dưới dải băng BB một chút
+            tp = price + (price - sl) * 2.5  # Tỉ lệ R:R = 1:2.5
+        else:
+            sl = max(price + atr * 1.5, bb_edge)  # SL đặt trên dải băng BB một chút
+            tp = price - (sl - price) * 2.5
 
-        sl = price - sl_dist if self.state == "LONG" else price + sl_dist
-        tp = price + tp_dist if self.state == "LONG" else price - tp_dist
+        sl_dist = abs(price - sl)
+        if sl_dist == 0: sl_dist = price * 0.001
 
-        risk_usd = self.capital * self.risk_pct
-        position_size = risk_usd / sl_dist
+        position_size = (self.capital * self.risk_pct) / sl_dist
         volume_usd = position_size * price
 
         self.trade = {
@@ -227,15 +223,11 @@ class TradeSimulator:
             "snapshot": indicators_snap, "pnl_pct": 0.0, "profit_usd": 0.0
         }
         self.just_opened = True
-
-        # Push Notification
-        msg = f"🟢 OPEN {self.state}\nEntry: {price}\nVol: {volume_usd:.2f}$\nTP: {tp:.2f} | SL: {sl:.2f}"
-        self.notifications.append(msg)
+        self.notifications.append(
+            f"🟢 OPEN {self.state}\nEntry: {price:.2f}\nVol: {volume_usd:.2f}$\nTP: {tp:.2f} | SL: {sl:.2f}")
 
     def process_tick(self, current_price: float, high: float, low: float) -> Optional[dict]:
         if self.state == "NONE": return None
-
-        # Delay execution: Không đóng lệnh trong cùng 1 tick mở lệnh (giả lập latency)
         if self.just_opened:
             self.just_opened = False
             return None
@@ -244,19 +236,20 @@ class TradeSimulator:
         is_closed = False
         res = ""
 
-        # Live PnL & Profit USD
         mult = 1 if self.state == "LONG" else -1
         t['pnl_pct'] = ((current_price - t['entry']) / t['entry']) * 100 * mult
         t['profit_usd'] = (current_price - t['entry']) * t['size'] * mult
 
-        # Check Hit TP/SL
+        # Chặn chốt sớm: Cho phép quét râu 0.05% vượt ngưỡng SL trước khi thực sự cắt lỗ
+        sl_buffer = t['entry'] * 0.0005
+
         if self.state == "LONG":
-            if low <= t['sl']:
+            if low <= (t['sl'] - sl_buffer):
                 is_closed = True; res = "LOSS"; exit_p = t['sl']
             elif high >= t['tp']:
                 is_closed = True; res = "WIN"; exit_p = t['tp']
         else:
-            if high >= t['sl']:
+            if high >= (t['sl'] + sl_buffer):
                 is_closed = True; res = "LOSS"; exit_p = t['sl']
             elif low <= t['tp']:
                 is_closed = True; res = "WIN"; exit_p = t['tp']
@@ -267,11 +260,9 @@ class TradeSimulator:
             capital_before = self.capital
             self.capital += final_profit_usd
 
-            exit_time = datetime.now().isoformat()
-
             log_entry = {
                 "symbol": self.symbol, "timeframe": self.timeframe,
-                "entry_time": t["entry_time"], "exit_time": exit_time,
+                "entry_time": t["entry_time"], "exit_time": datetime.now().isoformat(),
                 "entry_price": t["entry"], "exit_price": round(exit_p, 4),
                 "position": t["position"],
                 "capital_before": round(capital_before, 2), "capital_after": round(self.capital, 2),
@@ -280,7 +271,6 @@ class TradeSimulator:
                 "result": res
             }
 
-            # Ghi file
             try:
                 with open(self.trade_log_file, "a") as f:
                     f.write(json.dumps(log_entry) + "\n")
@@ -288,18 +278,16 @@ class TradeSimulator:
                 pass
 
             self.history.insert(0, log_entry)
-            self.history = self.history[:10]  # UI cần 10 record
+            self.history = self.history[:10]
 
-            # Push Notification
             icon = "🔴" if res == "LOSS" else "🔵"
-            msg = f"{icon} CLOSED {res}\nPnL: {final_pnl_pct:.2f}%\nProfit: {final_profit_usd:.2f}$"
-            self.notifications.append(msg)
+            self.notifications.append(
+                f"{icon} CLOSED {res}\nPnL: {final_pnl_pct:.2f}%\nProfit: {final_profit_usd:.2f}$")
 
             closed_trade_data = {"snapshot": t["snapshot"], "direction": self.state, "result": res}
-
             self.state = "NONE";
             self.trade = {};
-            self.cooldown = 3
+            self.cooldown = 4
             return closed_trade_data
 
         return None
@@ -354,13 +342,14 @@ class AdvancedSignalEngine:
         c_price = self._safe_get(curr.get('close'))
         c_high = self._safe_get(curr.get('high'), c_price)
         c_low = self._safe_get(curr.get('low'), c_price)
+        c_vol = self._safe_get(curr.get('volume'), 0)
+        p_vol = self._safe_get(prev.get('volume'), 0)
         c_time = int(curr['timestamp'].timestamp())
         c_time_str = datetime.fromtimestamp(c_time).strftime('%H:%M:%S')
 
-        # 1. PROCESS TICK (REALTIME EXECUTION)
+        # 1. PROCESS TICK
         closed_trade = self.trade_sim.process_tick(c_price, c_high, c_low)
         if closed_trade:
-            # HỌC TỪ TRADE THẬT
             self.scorer.learn_from_real_trade(closed_trade["snapshot"], closed_trade["direction"],
                                               closed_trade["result"])
 
@@ -369,10 +358,7 @@ class AdvancedSignalEngine:
         ema9_prev = self._safe_get(prev.get('EMA_9'), c_price)
         slope = ema9 - ema9_prev
         mid_price = c_price + (slope * 5)
-        range_w = atr * 1.5
-        p_dir = "BULLISH" if slope > 0 else "BEARISH"
 
-        # 2. EVENT-DRIVEN: CHỈ CHẠY 1 LẦN KHI NẾN ĐÓNG
         if self.last_candle_time != c_time:
             self.scorer.evaluate_and_learn(c_time, float(prev['close']))
 
@@ -391,14 +377,14 @@ class AdvancedSignalEngine:
             rsi_val = self._safe_get(curr.get('RSI_14'), 50.0)
             bb_u = self._safe_get(curr.get('BB_U'), c_price)
             bb_l = self._safe_get(curr.get('BB_L'), c_price)
-            vwap = self._safe_get(curr.get('VWAP'), c_price)
 
             raw_sigs = {
                 'EMA': 1.0 if ema9 > self._safe_get(curr.get('EMA_21'), c_price) else -1.0,
                 'MACD': max(-1.0, min(1.0, macd_h / (atr * 0.5))),
                 'RSI': max(-1.0, min(1.0, (rsi_val - 50) / 20)),
                 'BB': 1.0 if c_price <= bb_l else (-1.0 if c_price >= bb_u else 0.0),
-                'VWAP': 1.0 if c_price > vwap else -1.0, 'MTF': mtf_score
+                'VWAP': 1.0 if c_price > self._safe_get(curr.get('VWAP'), c_price) else -1.0,
+                'MTF': mtf_score
             }
 
             weights = self.scorer.get_weights()
@@ -412,13 +398,22 @@ class AdvancedSignalEngine:
             action = "HOLD"
             bb_width = (bb_u - bb_l) / c_price
 
-            if bb_width > 0.0008 and self.trade_sim.cooldown == 0:
+            # ĐIỀU KIỆN MỞ LỆNH KHẮT KHE HƠN (MOMENTUM + VOLUME FILTER)
+            is_volume_spike = c_vol > (p_vol * 1.1) if p_vol > 0 else True
+            is_slope_clear = abs(slope) > (atr * 0.05)
+
+            if bb_width > 0.0008 and self.trade_sim.cooldown == 0 and is_volume_spike and is_slope_clear:
                 if self.smoothed_score > current_thresh:
                     dir_cand = "BUY"
                 elif self.smoothed_score < -current_thresh:
                     dir_cand = "SELL"
                 else:
                     dir_cand = "HOLD"
+
+                # INVERT SIGNAL Nếu AI đang đoán sai quá nhiều
+                if self.scorer.reverse_mode and dir_cand != "HOLD":
+                    dir_cand = "SELL" if dir_cand == "BUY" else "BUY"
+                    self.ui_state["reason"] = "REVERSE MODE ACTIVE!"
 
                 if dir_cand == self.current_dir and dir_cand != "HOLD":
                     self.confirm_counter += 1
@@ -427,8 +422,12 @@ class AdvancedSignalEngine:
 
                 if self.confirm_counter >= 2:
                     action = dir_cand
-                    # MỞ LỆNH THẬT
-                    self.trade_sim.open_position(c_time_str, action, c_price, atr, raw_sigs)
+                    # MỞ LỆNH VỚI TP/SL DYNAMIC VÀ BUFFER
+                    bb_edge = bb_l if action == "BUY" else bb_u
+                    self.trade_sim.open_position(c_time_str, action, c_price, atr, bb_edge, raw_sigs)
+
+            p_dir = "BULLISH" if slope > 0 else "BEARISH"
+            if self.scorer.reverse_mode: p_dir = "BEARISH" if p_dir == "BULLISH" else "BULLISH"
 
             conf = max(0.1, min(0.95, 1.0 - (atr / c_price) * 10))
             pred = {"direction": p_dir, "mid_price": round(mid_price, 2),
@@ -445,23 +444,25 @@ class AdvancedSignalEngine:
             reason_txt = "Monitoring..."
             if action != "HOLD":
                 reason_txt = "Trend Confirmed"
+            elif not is_slope_clear:
+                reason_txt = "Weak Momentum (No Slope)"
+            elif not is_volume_spike:
+                reason_txt = "Waiting for Volume"
             elif self.trade_sim.cooldown > 0:
                 reason_txt = f"Cooldown ({self.trade_sim.cooldown})"
 
             pending_list = [{"time": datetime.fromtimestamp(k).strftime('%H:%M:%S'), "direction": v['direction'],
                              "range": f"{v['range']['min']:.2f} - {v['range']['max']:.2f}", "actual_price": 0.0,
                              "final_result": "WAITING"} for k, v in list(self.scorer.pending_predictions.items())[-3:]]
-            combined_tracker = pending_list + self.scorer.recent_results
 
             self.ui_state.update({
                 "action": action, "signal": action, "score": round(self.smoothed_score, 3),
                 "confidence": round(conf, 3),
                 "prediction": pred, "indicators": indicators_snap, "reason": reason_txt, "weights": weights,
-                "winrate": self.scorer.get_winrate(), "tracker": combined_tracker[:10]
+                "winrate": self.scorer.get_winrate(), "tracker": pending_list + self.scorer.recent_results[:7]
             })
             self.last_candle_time = c_time
 
-        # 3. GỘP STATE CẬP NHẬT REALTIME CHO FRONTEND
         res_out = self.ui_state.copy()
         res_out["notifications"] = self.trade_sim.get_notifications()
         res_out["trade_history"] = self.trade_sim.history[:10]
