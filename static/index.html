@@ -9,6 +9,7 @@
         select, input, button { background: #1E222D; color: white; border: 1px solid #474D57; padding: 8px; border-radius: 4px; font-size: 14px; outline: none; }
         button { cursor: pointer; font-weight: bold; transition: 0.2s;}
         button:hover { background: #2B3139; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         #chart-container { flex: 3; height: calc(100vh - 40px); border: 1px solid #2B3139; background: #131722; position: relative; border-radius: 6px; overflow: hidden;}
         #panel { flex: 1; background: #131722; padding: 20px; border-radius: 6px; border: 1px solid #2B3139; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: calc(100vh - 40px); box-sizing: border-box;}
@@ -31,14 +32,23 @@
         th { color: #848E9C; padding-bottom: 8px; font-weight: normal; border-bottom: 1px solid #2B3139;}
         td { padding: 6px 0; border-bottom: 1px solid #2B3139;}
 
-        /* CSS Bổ sung cho thanh tiến trình Indicator Weights */
         .weight-bar { background: #2B3139; height: 5px; border-radius: 3px; margin-top: 4px; overflow: hidden; width: 100%; }
         .weight-fill { background: #FCD535; height: 100%; transition: width 0.3s ease;}
 
-        /* CSS Bổ sung cho Hệ thống Notification (Toast) */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: #1E222D; border-left: 4px solid #FCD535; padding: 12px 16px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); color: #D9D9D9; font-size: 13px; min-width: 250px; animation: slideIn 0.3s ease-out forwards; white-space: pre-line; line-height: 1.4;}
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .loading-pulse { animation: pulse 1s infinite; color: #FFA500; font-style: italic; }
+
+        .tool-btn { background: #2B3139; color: #D9D9D9; border: 1px solid #474D57; padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; flex: 1; text-align: center;}
+        .tool-btn.active { background: #2962FF; border-color: #2962FF; color: white;}
+        .manual-input { width: 90px; text-align: right; background: #131722; padding: 4px; border: 1px solid #474D57; border-radius: 4px; color: white; font-family: monospace;}
+        #ai-advisor-box { background: #131722; padding: 10px; border-left: 3px solid #B228FF; border-radius: 0 4px 4px 0; font-size: 12px; margin-top: 10px; color: #D9D9D9; display: none; line-height: 1.5; transition: 0.3s;}
+
+        .table-scroll { max-height: 300px; overflow-y: auto; overflow-x: hidden; margin-top: 10px; border: 1px solid #2B3139; border-radius: 4px; }
+        .table-scroll table { margin-top: 0; }
+        .table-scroll th { position: sticky; top: 0; background: #1E222D; z-index: 1; }
     </style>
 </head>
 <body>
@@ -58,6 +68,7 @@
                 <option value="1h">1 Hour</option>
             </select>
             <span id="ws-status" style="margin-top: 8px; color: #FFA500; font-weight: bold;">Connecting WS...</span>
+            <span id="cursor-hint" style="margin-top: 8px; color: #2962FF; font-weight: bold; display: none;">📍 Nhấp vào Chart để lấy giá</span>
         </div>
         <div id="chart-container">
             <div class="chart-legend">
@@ -72,6 +83,60 @@
         <div class="metric">
             <div class="info-label">Live Market Price</div>
             <div class="price-text" id="price">---</div>
+        </div>
+
+        <div class="metric" style="border-color: #2962FF;">
+            <h3 style="color: #2962FF;">🕹️ Manual Trade Simulator</h3>
+
+            <div class="info-row">
+                <span class="info-label">Position:</span>
+                <select id="manual-position" style="padding: 4px; height: 28px;">
+                    <option value="LONG">🟢 LONG</option>
+                    <option value="SHORT">🔴 SHORT</option>
+                </select>
+            </div>
+
+            <div class="info-row">
+                <button id="btn-set-entry" class="tool-btn" style="margin-right: 10px;">Set Entry 🎯</button>
+                <input type="number" id="manual-entry" class="manual-input" placeholder="0.00">
+            </div>
+
+            <div class="info-row">
+                <button id="btn-set-tp" class="tool-btn" style="margin-right: 10px;">Set TP 🎯</button>
+                <input type="number" id="manual-tp" class="manual-input" placeholder="0.00">
+            </div>
+
+            <div class="info-row">
+                <button id="btn-set-sl" class="tool-btn" style="margin-right: 10px;">Set SL 🎯</button>
+                <input type="number" id="manual-sl" class="manual-input" placeholder="0.00">
+            </div>
+
+            <div class="info-row" style="margin-top: 10px; border-top: 1px solid #2B3139; padding-top: 8px;">
+                <span class="info-label">Risk/Reward (RR):</span>
+                <strong id="manual-rr" style="font-size: 16px;">0.00</strong>
+            </div>
+
+            <div id="ai-advisor-box"></div>
+
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button id="btn-analyze" style="flex: 1; background: #B228FF; border-color: #B228FF;">AI Analyze</button>
+                <button id="btn-open-manual" style="flex: 1; background: #00FF00; color: #000; border-color: #00FF00;">Open Trade</button>
+                <button id="btn-clear-manual" style="flex: 0.5; background: #FF0000; border-color: #FF0000;">Clear</button>
+            </div>
+        </div>
+
+        <div class="metric">
+            <h3 style="color: #2962FF;">📜 Lịch Sử Manual Trade</h3>
+            <div class="table-scroll">
+                <table id="manual-history-table">
+                    <thead>
+                        <tr><th>Time</th><th>Pos</th><th>Entry</th><th>Exit</th><th>TP/SL</th><th>PnL</th><th>Result</th></tr>
+                    </thead>
+                    <tbody id="manual-history-body">
+                        <tr><td colspan="7" style="color:#848E9C; padding-top:10px;">Chưa có lệnh thủ công nào</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="metric">
@@ -122,12 +187,11 @@
         </div>
 
         <div class="metric" style="border-color: #FCD535;">
-            <h3 style="color: #FCD535;">3. Trade Execution Engine</h3>
+            <h3 style="color: #FCD535;">3. Auto Trade Execution</h3>
             <div class="info-row" style="margin-bottom: 8px; border-bottom: 1px solid #2B3139; padding-bottom: 8px;">
                 <span class="info-label">Current Capital:</span>
                 <strong id="trade-capital" style="color: #FCD535; font-size: 15px;">---</strong>
             </div>
-
             <div class="info-row">
                 <span class="info-label">Position Status:</span>
                 <strong id="trade-status">NONE</strong>
@@ -155,18 +219,29 @@
         </div>
 
         <div class="metric">
-            <h3>📜 Trade History</h3>
-            <table id="trade-history-table">
-                <tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>
-                <tr><td colspan="6" style="color:#848E9C; padding-top:10px;">No closed trades yet</td></tr>
-            </table>
+            <h3>📜 Auto Trade History</h3>
+            <div class="table-scroll">
+                <table id="trade-history-table">
+                    <thead>
+                        <tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>
+                    </thead>
+                    <tbody id="trade-history-body">
+                        <tr><td colspan="6" style="color:#848E9C; padding-top:10px;">No closed trades yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="metric">
             <h3>4. Forward Testing (Real-time)</h3>
-            <table id="tracker-table">
-                <tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>
-            </table>
+            <div class="table-scroll">
+                <table id="tracker-table">
+                    <thead>
+                        <tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>
+                    </thead>
+                    <tbody id="tracker-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -189,9 +264,177 @@
         const ema21Series = chart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1.5 });
         const predictionSeries = chart.addSeries(LineSeries, { color: '#B228FF', lineWidth: 2, lineStyle: 2 });
 
-        let entryLine = null;
-        let tpLine = null;
-        let slLine = null;
+        let entryLine = null, tpLine = null, slLine = null;
+        let mEntryLine = null, mTpLine = null, mSlLine = null;
+        let activeClickMode = null;
+
+        const inpEntry = document.getElementById('manual-entry');
+        const inpTp = document.getElementById('manual-tp');
+        const inpSl = document.getElementById('manual-sl');
+        const selectPos = document.getElementById('manual-position');
+        const lblRR = document.getElementById('manual-rr');
+        const cursorHint = document.getElementById('cursor-hint');
+        const btnAnalyze = document.getElementById('btn-analyze');
+        const btnOpen = document.getElementById('btn-open-manual');
+        const advBox = document.getElementById('ai-advisor-box');
+
+        function setClickMode(mode, btnId) {
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            if (activeClickMode === mode) {
+                activeClickMode = null;
+                cursorHint.style.display = 'none';
+            } else {
+                activeClickMode = mode;
+                document.getElementById(btnId).classList.add('active');
+                cursorHint.style.display = 'inline';
+            }
+        }
+
+        document.getElementById('btn-set-entry').onclick = () => setClickMode('ENTRY', 'btn-set-entry');
+        document.getElementById('btn-set-tp').onclick = () => setClickMode('TP', 'btn-set-tp');
+        document.getElementById('btn-set-sl').onclick = () => setClickMode('SL', 'btn-set-sl');
+
+        chart.subscribeClick((param) => {
+            if (!param.point || !activeClickMode) return;
+            const price = candleSeries.coordinateToPrice(param.point.y);
+            if (price === null) return;
+
+            const formattedPrice = price.toFixed(2);
+            if (activeClickMode === 'ENTRY') inpEntry.value = formattedPrice;
+            else if (activeClickMode === 'TP') inpTp.value = formattedPrice;
+            else if (activeClickMode === 'SL') inpSl.value = formattedPrice;
+
+            setClickMode(null, null);
+            updateManualLines();
+        });
+
+        function updateManualLines() {
+            const e = parseFloat(inpEntry.value);
+            const t = parseFloat(inpTp.value);
+            const s = parseFloat(inpSl.value);
+
+            if (e) {
+                if (!mEntryLine) mEntryLine = candleSeries.createPriceLine({price: e, color: '#2962FF', lineWidth: 2, lineStyle: 2, title: 'Draft ENTRY'});
+                else mEntryLine.applyOptions({price: e});
+            }
+            if (t) {
+                if (!mTpLine) mTpLine = candleSeries.createPriceLine({price: t, color: '#00FF00', lineWidth: 2, lineStyle: 2, title: 'Draft TP'});
+                else mTpLine.applyOptions({price: t});
+            }
+            if (s) {
+                if (!mSlLine) mSlLine = candleSeries.createPriceLine({price: s, color: '#FF0000', lineWidth: 2, lineStyle: 2, title: 'Draft SL'});
+                else mSlLine.applyOptions({price: s});
+            }
+            calcRR(e, t, s);
+        }
+
+        function calcRR(e, t, s) {
+            if (!e || !t || !s) { lblRR.innerText = "0.00"; return; }
+            const risk = Math.abs(e - s);
+            const reward = Math.abs(t - e);
+            if (risk === 0) return;
+            const rr = reward / risk;
+            lblRR.innerText = rr.toFixed(2);
+            lblRR.style.color = rr >= 1.5 ? '#00FF00' : '#FF0000';
+        }
+
+        [inpEntry, inpTp, inpSl].forEach(el => el.addEventListener('input', updateManualLines));
+        selectPos.addEventListener('change', () => calcRR(parseFloat(inpEntry.value), parseFloat(inpTp.value), parseFloat(inpSl.value)));
+
+        document.getElementById('btn-clear-manual').onclick = () => {
+            inpEntry.value = ""; inpTp.value = ""; inpSl.value = "";
+            lblRR.innerText = "0.00"; lblRR.style.color = "#D9D9D9";
+            advBox.style.display = 'none';
+            if (mEntryLine) candleSeries.removePriceLine(mEntryLine); mEntryLine = null;
+            if (mTpLine) candleSeries.removePriceLine(mTpLine); mTpLine = null;
+            if (mSlLine) candleSeries.removePriceLine(mSlLine); mSlLine = null;
+        };
+
+        // UX: Xử lý trạng thái Loading cho Analyze
+        btnAnalyze.onclick = async () => {
+            const e = parseFloat(inpEntry.value);
+            const t = parseFloat(inpTp.value);
+            const s = parseFloat(inpSl.value);
+            if (!e || !t || !s) { alert("Vui lòng set đủ Entry, TP, SL để AI phân tích!"); return; }
+
+            btnAnalyze.disabled = true;
+            btnAnalyze.innerText = "⏳ Analyzing...";
+            advBox.style.display = 'block';
+            advBox.innerHTML = '<span class="loading-pulse">Đang tổng hợp dữ liệu AI...</span>';
+
+            const sym = document.getElementById('symbolSelect').value;
+            const tf = document.getElementById('intervalSelect').value;
+
+            try {
+                const req = await fetch(`/trade/analyze?symbol=${sym}&interval=${tf}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({entry: e, tp: t, sl: s, position: selectPos.value})
+                });
+                const res = await req.json();
+
+                if (res.suggestions && res.suggestions.length > 0) {
+                    advBox.innerHTML = `<strong>💡 AI Advisor:</strong><br>` + res.suggestions.join('<br><br>');
+                } else {
+                    advBox.innerHTML = `<strong style="color:#00FF00;">✅ AI Advisor:</strong> Kèo hợp lý! RR = ${res.rr}`;
+                }
+            } catch (err) {
+                advBox.innerHTML = `<strong style="color:#FF0000;">Lỗi kết nối AI!</strong>`;
+            } finally {
+                btnAnalyze.disabled = false;
+                btnAnalyze.innerText = "AI Analyze";
+            }
+        };
+
+        // UX: Xử lý chống Spam Click & Validation Logic
+        btnOpen.onclick = async () => {
+            const e = parseFloat(inpEntry.value);
+            const t = parseFloat(inpTp.value);
+            const s = parseFloat(inpSl.value);
+            if (!e || !t || !s) { alert("Vui lòng set đủ Entry, TP, SL!"); return; }
+
+            // BẢN VÁ: VALIDATION NGĂN CHẶN LỖI LOGIC NGƯỜI DÙNG
+            const pos = selectPos.value;
+            if (pos === "LONG") {
+                if (t <= e) { alert("⛔ Lỗi Logic: Lệnh LONG thì Take Profit (TP) phải LỚN HƠN Entry!"); return; }
+                if (s >= e) { alert("⛔ Lỗi Logic: Lệnh LONG thì Stop Loss (SL) phải NHỎ HƠN Entry!"); return; }
+            } else {
+                if (t >= e) { alert("⛔ Lỗi Logic: Lệnh SHORT thì Take Profit (TP) phải NHỎ HƠN Entry!"); return; }
+                if (s <= e) { alert("⛔ Lỗi Logic: Lệnh SHORT thì Stop Loss (SL) phải LỚN HƠN Entry!"); return; }
+            }
+
+            btnOpen.disabled = true;
+            btnOpen.innerText = "⏳ Opening...";
+
+            const sym = document.getElementById('symbolSelect').value;
+            const tf = document.getElementById('intervalSelect').value;
+
+            try {
+                const req = await fetch(`/trade/open-manual?symbol=${sym}&interval=${tf}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({entry: e, tp: t, sl: s, position: pos})
+                });
+                const res = await req.json();
+                if (res.status === "success") {
+                    advBox.style.display = 'block';
+                    advBox.innerHTML = `<strong style="color:#00FF00;">✅ LỆNH ĐÃ ĐƯỢC ĐẨY VÀO HỆ THỐNG THÀNH CÔNG!</strong>`;
+                }
+            } catch (err) {
+                alert("Lỗi khi mở lệnh!");
+            } finally {
+                setTimeout(() => {
+                    btnOpen.disabled = false;
+                    btnOpen.innerText = "Open Trade";
+                }, 1000); // Ngăn spam click trong 1 giây
+            }
+        };
+
+        function formatTime(isoStr) {
+            if (!isoStr) return '---';
+            const d = new Date(isoStr);
+            return d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
+        }
 
         let ws;
         function connectWS() {
@@ -208,7 +451,6 @@
 
                 if (res.type === "FULL_LOAD") {
                     try {
-                        // BẢN VÁ: Xóa ngay các đường kẽ lệnh cũ khi vừa Load cặp mới
                         if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
                         if (tpLine) { candleSeries.removePriceLine(tpLine); tpLine = null; }
                         if (slLine) { candleSeries.removePriceLine(slLine); slLine = null; }
@@ -219,6 +461,15 @@
                         ema21Series.setData(localData.map(d => ({time: d.time, value: d.EMA_21})));
                         predictionSeries.setData([]);
                     } catch (e) {}
+                }
+                else if (res.type === "MANUAL_TRADE_CLOSED") {
+                    let toastContainer = document.getElementById('toast-container');
+                    const toast = document.createElement('div');
+                    toast.className = 'toast';
+                    toast.style.borderLeftColor = res.data.result === 'WIN' ? '#00FF00' : '#FF0000';
+                    toast.innerText = `🔔 LỆNH MANUAL ĐÃ ĐÓNG!\nKết quả: ${res.data.result}\nGiá thoát: ${res.data.exit_price.toFixed(2)}\nPnL: ${res.data.pnl}%`;
+                    toastContainer.appendChild(toast);
+                    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 6000);
                 }
                 else if (res.type === "TICK" || res.type === "CANDLE_CLOSE" || res.type === "TICK_UPDATE") {
                     try {
@@ -231,47 +482,66 @@
                         const payload = res.signal;
 
                         if (payload) {
-                            // Cập nhật Line Chỉ báo (Lấy từ payload.indicators để đảm bảo Realtime)
                             if (payload.indicators) {
                                 const i_ema9 = payload.indicators.EMA_9;
                                 const i_ema21 = payload.indicators.EMA_21;
-
                                 ema9Series.update({time: localTime, value: i_ema9});
                                 ema21Series.update({time: localTime, value: i_ema21});
-
-                                document.getElementById('legend-dynamic').innerHTML = `
-                                    <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
-                                    <br><span style="color:#2962FF">EMA 9: ${i_ema9.toFixed(2)}</span>
-                                    <br><span style="color:#FF6D00">EMA 21: ${i_ema21.toFixed(2)}</span>
-                                `;
+                                document.getElementById('legend-dynamic').innerHTML = `<strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong><br><span style="color:#2962FF">EMA 9: ${i_ema9.toFixed(2)}</span><br><span style="color:#FF6D00">EMA 21: ${i_ema21.toFixed(2)}</span>`;
                             }
 
-                            // Notification (Toast)
                             if (payload.notifications && payload.notifications.length > 0) {
                                 let toastContainer = document.getElementById('toast-container');
-                                if (!toastContainer) {
-                                    toastContainer = document.createElement('div');
-                                    toastContainer.id = 'toast-container';
-                                    toastContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
-                                    document.body.appendChild(toastContainer);
-                                }
-
                                 payload.notifications.forEach(msg => {
                                     const toast = document.createElement('div');
                                     toast.className = 'toast';
                                     toast.style.borderLeftColor = msg.includes('🟢') ? '#00FF00' : (msg.includes('🔴') ? '#FF0000' : '#FCD535');
                                     toast.innerText = msg;
                                     toastContainer.appendChild(toast);
-
-                                    setTimeout(() => {
-                                        toast.style.opacity = '0';
-                                        toast.style.transition = 'opacity 0.3s ease';
-                                        setTimeout(() => toast.remove(), 300);
-                                    }, 6000);
+                                    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 6000);
                                 });
                             }
 
-                            // Prediction Range
+                            // BẢN VÁ: RENDER LỊCH SỬ MANUAL TRADE (GỒM CẢ LỆNH ĐANG CHẠY VÀ ĐÃ ĐÓNG)
+                            let mHtml = "";
+
+                            // 1. Render lệnh đang chạy (Active) lên trên cùng
+                            if (payload.manual_active && payload.manual_active.length > 0) {
+                                payload.manual_active.forEach(h => {
+                                    let typeCol = h.position === "LONG" ? "val-green" : "val-red";
+                                    mHtml += `<tr style="background: rgba(41, 98, 255, 0.1);">
+                                        <td>${formatTime(h.entry_time)}<br><span class="loading-pulse">Chờ...</span></td>
+                                        <td class="${typeCol}">${h.position.substring(0,4)}</td>
+                                        <td>${h.entry.toFixed(2)}<br><span class="loading-pulse">Live</span></td>
+                                        <td style="font-size:10px;"><span class="val-green">${h.tp.toFixed(2)}</span><br><span class="val-red">${h.sl.toFixed(2)}</span></td>
+                                        <td style="color:#FFA500;">---</td>
+                                        <td style="color:#FFA500; font-weight:bold;">OPEN</td>
+                                    </tr>`;
+                                });
+                            }
+
+                            // 2. Render lệnh đã đóng (History)
+                            if (payload.manual_history && payload.manual_history.length > 0) {
+                                payload.manual_history.forEach(h => {
+                                    let col = h.result === "WIN" ? "val-green" : "val-red";
+                                    let typeCol = h.position === "LONG" ? "val-green" : "val-red";
+                                    mHtml += `<tr>
+                                        <td>${formatTime(h.entry_time)}<br><span style="color:#848E9C;">${formatTime(h.exit_time)}</span></td>
+                                        <td class="${typeCol}">${h.position.substring(0,4)}</td>
+                                        <td>${h.entry.toFixed(2)}<br><span style="color:#848E9C;">${h.exit_price ? h.exit_price.toFixed(2) : '---'}</span></td>
+                                        <td style="font-size:10px;"><span class="val-green">${h.tp.toFixed(2)}</span><br><span class="val-red">${h.sl.toFixed(2)}</span></td>
+                                        <td class="${col}">${h.pnl}%</td>
+                                        <td class="${col}">${h.result}</td>
+                                    </tr>`;
+                                });
+                            }
+
+                            if (mHtml === "") {
+                                mHtml = `<tr><td colspan="7" style="color:#848E9C; padding-top:10px;">Chưa có lệnh thủ công nào</td></tr>`;
+                            }
+                            document.getElementById('manual-history-body').innerHTML = mHtml;
+
+                            // Giữ nguyên các render còn lại cho AUTO BOT
                             if (payload.prediction && payload.prediction.mid_price) {
                                 const intervalStr = document.getElementById('intervalSelect').value;
                                 let seconds = 60;
@@ -279,22 +549,17 @@
                                 if(intervalStr.includes('h')) seconds = parseInt(intervalStr) * 3600;
 
                                 const futureTime = localTime + (seconds * 5);
-                                predictionSeries.setData([
-                                    { time: localTime, value: currentPrice },
-                                    { time: futureTime, value: payload.prediction.mid_price }
-                                ]);
+                                predictionSeries.setData([{ time: localTime, value: currentPrice }, { time: futureTime, value: payload.prediction.mid_price }]);
 
                                 const dirEl = document.getElementById('pred-dir');
                                 dirEl.innerText = payload.prediction.direction;
                                 dirEl.className = payload.prediction.direction === "BULL" || payload.prediction.direction === "BULLISH" ? "val-green" : "val-red";
-
                                 document.getElementById('pred-target').innerText = payload.prediction.mid_price.toFixed(2);
                                 let rObj = payload.prediction.range;
                                 let rangeTxt = typeof rObj === 'object' ? `${rObj.min.toFixed(2)} - ${rObj.max.toFixed(2)}` : rObj;
                                 document.getElementById('pred-range').innerText = `[${rangeTxt}]`;
                             }
 
-                            // Signal Engine Core UI
                             const actEl = document.getElementById('action');
                             actEl.innerText = payload.action || payload.signal;
                             actEl.className = actEl.innerText.includes('BUY') ? 'score-buy' : (actEl.innerText.includes('SELL') ? 'score-sell' : 'score-hold');
@@ -304,32 +569,18 @@
                             if (payload.reason) document.getElementById('reason').innerText = payload.reason;
                             if (payload.winrate !== undefined) document.getElementById('winrate').innerText = payload.winrate + "%";
 
-                            // Weights Progress Bar
                             if (payload.weights) {
                                 let wHtml = "";
                                 for (const [key, val] of Object.entries(payload.weights)) {
                                     let pct = (val * 100).toFixed(1);
-                                    wHtml += `
-                                    <div style="margin-top: 6px;">
-                                        <div class="info-row" style="margin-top: 0;">
-                                            <span class="info-label">${key.toUpperCase()}</span>
-                                            <span>${pct}%</span>
-                                        </div>
-                                        <div class="weight-bar">
-                                            <div class="weight-fill" style="width: ${pct}%"></div>
-                                        </div>
-                                    </div>`;
+                                    wHtml += `<div style="margin-top: 6px;"><div class="info-row" style="margin-top: 0;"><span class="info-label">${key.toUpperCase()}</span><span>${pct}%</span></div><div class="weight-bar"><div class="weight-fill" style="width: ${pct}%"></div></div></div>`;
                                 }
                                 document.getElementById('weights-container').innerHTML = wHtml;
                             }
 
-                            // Trade Execution Engine
                             const trade = payload.trade;
                             if (trade) {
-                                if (trade.capital !== undefined) {
-                                    document.getElementById('trade-capital').innerText = trade.capital.toFixed(2) + " $";
-                                }
-
+                                if (trade.capital !== undefined) document.getElementById('trade-capital').innerText = trade.capital.toFixed(2) + " $";
                                 const statusEl = document.getElementById('trade-status');
                                 statusEl.innerText = trade.position_status;
                                 if(trade.position_status === 'OPEN') statusEl.className = 'val-green';
@@ -346,22 +597,18 @@
                                     let sign = trade.profit_usd >= 0 ? "+" : "";
                                     profitEl.innerText = `${sign}${trade.profit_usd.toFixed(2)} $ (${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)}%)`;
                                     profitEl.className = trade.profit_usd >= 0 ? 'val-green' : 'val-red';
-                                } else {
-                                    profitEl.innerText = "---";
-                                    profitEl.className = "";
-                                }
+                                } else { profitEl.innerText = "---"; profitEl.className = ""; }
 
-                                // Vẽ lệnh trên Chart
                                 if (trade.position_status !== 'NONE' && trade.entry) {
-                                    if (!entryLine) entryLine = candleSeries.createPriceLine({price: trade.entry, color: '#FCD535', lineWidth: 2, title: 'ENTRY'});
+                                    if (!entryLine) entryLine = candleSeries.createPriceLine({price: trade.entry, color: '#FCD535', lineWidth: 2, title: 'AUTO ENTRY'});
                                     else entryLine.applyOptions({price: trade.entry});
 
                                     if (trade.tp) {
-                                        if (!tpLine) tpLine = candleSeries.createPriceLine({price: trade.tp, color: '#00FF00', lineWidth: 2, title: 'TP'});
+                                        if (!tpLine) tpLine = candleSeries.createPriceLine({price: trade.tp, color: '#00FF00', lineWidth: 2, title: 'AUTO TP'});
                                         else tpLine.applyOptions({price: trade.tp});
                                     }
                                     if (trade.sl) {
-                                        if (!slLine) slLine = candleSeries.createPriceLine({price: trade.sl, color: '#FF0000', lineWidth: 2, title: 'SL'});
+                                        if (!slLine) slLine = candleSeries.createPriceLine({price: trade.sl, color: '#FF0000', lineWidth: 2, title: 'AUTO SL'});
                                         else slLine.applyOptions({price: trade.sl});
                                     }
                                 } else {
@@ -371,16 +618,14 @@
                                 }
                             }
 
-                            // BẢN VÁ: Trade History (Fix rác bảng khi đổi Symbol)
                             if (payload.trade_history) {
-                                let hHtml = `<tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>`;
+                                let hHtml = "";
                                 if (payload.trade_history.length > 0) {
                                     payload.trade_history.forEach(h => {
                                         let col = h.result === "WIN" ? "val-green" : (h.result === "LOSS" ? "val-red" : "");
                                         let typeCol = h.position === "LONG" || h.type === "LONG" ? "val-green" : "val-red";
                                         let posText = h.position || h.type || "---";
                                         let profitText = h.profit_usd ? (h.profit_usd > 0 ? '+' : '') + h.profit_usd.toFixed(2) + '$' : '---';
-
                                         hHtml += `<tr>
                                             <td class="${typeCol}">${posText.substring(0,4)}</td>
                                             <td>${h.entry_price ? h.entry_price.toFixed(1) : h.entry.toFixed(1)}</td>
@@ -393,12 +638,11 @@
                                 } else {
                                     hHtml += `<tr><td colspan="6" style="color:#848E9C; padding-top:10px;">No closed trades yet</td></tr>`;
                                 }
-                                document.getElementById('trade-history-table').innerHTML = hHtml;
+                                document.getElementById('trade-history-body').innerHTML = hHtml;
                             }
 
-                            // BẢN VÁ: Tracker Forward Testing (Fix rác bảng khi đổi Symbol)
                             if (payload.tracker) {
-                                let tHtml = `<tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
+                                let tHtml = "";
                                 if (payload.tracker.length > 0) {
                                     payload.tracker.forEach(item => {
                                         let timeStr = item.time;
@@ -406,10 +650,8 @@
                                             let dateObj = new Date(timeStr);
                                             timeStr = dateObj.getHours().toString().padStart(2, '0') + ":" + dateObj.getMinutes().toString().padStart(2, '0');
                                         }
-
                                         let resColor = item.final_result === 'WIN' ? '#00FF00' : (item.final_result === 'LOSS' ? '#FF0000' : '#FFA500');
                                         let dirColor = item.direction.includes('BULL') ? '#00FF00' : '#FF0000';
-
                                         let rangeTxt = typeof item.range === 'object' ? `${item.range.min.toFixed(1)} - ${item.range.max.toFixed(1)}` : item.range;
                                         let actTxt = item.actual_price > 0 ? item.actual_price.toFixed(2) : "---";
 
@@ -424,7 +666,7 @@
                                 } else {
                                     tHtml += `<tr><td colspan="5" style="color:#848E9C; padding-top:10px;">Waiting for first evaluation...</td></tr>`;
                                 }
-                                document.getElementById('tracker-table').innerHTML = tHtml;
+                                document.getElementById('tracker-body').innerHTML = tHtml;
                             }
 
                         }

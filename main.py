@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import uvicorn
 
+from ai_advisor import analyze_user_trade
 # Import c?c module b?n ?? t?o
 from data_layer import data_manager
 from indicator_layer import IndicatorLayer
@@ -29,8 +30,19 @@ engines = {
 }
 
 
-# --- CALLBACK X? L? D? LI?U T? WEBSOCKET BINANCE ---
 async def on_market_tick(symbol: str, interval: str, is_closed: bool, tick_data: dict):
+    engine = engines.get(f"{symbol}_{interval}")
+    current_price = tick_data['close']
+
+    # 1. C?p nh?t trade th? c?ng (TP/SL)
+    closed_manual_trade = engine.manual_sim.update_tick(current_price)
+    if closed_manual_trade:
+        # G?i th?ng b?o WebSocket khi l?nh th? c?ng kh?p TP/SL
+        await connection_manager.broadcast_to_symbol(json.dumps({
+            "type": "MANUAL_TRADE_CLOSED",
+            "data": closed_manual_trade
+        }), symbol, interval)
+
     # 1. L?y d? li?u t? RAM Cache
     df_raw = data_manager.cache.get(symbol, {}).get(interval)
     if df_raw is None or df_raw.empty: return
@@ -53,8 +65,10 @@ async def on_market_tick(symbol: str, interval: str, is_closed: bool, tick_data:
     # L?i engine ?? t? c? t??ng l?a, n? s? t? update PnL v? ch?t n?n chu?n
     # ====================================================================
     analysis = engine.generate_signal(df_ind, mtf_context)
-
-    # 3. Broadcast d? li?u xu?ng Frontend (Kh?ng c?n quan t?m n?n ??ng/m?)
+    #analysis["manual_trade"] = engine.manual_sim.active_trades[0] if engine.manual_sim.active_trades else None
+    #analysis["manual_history"] = engine.manual_sim.history
+    analysis["manual_active"] = engine.manual_sim.active_trades
+    analysis["manual_history"] = engine.manual_sim.history
     message = json.dumps({
         "type": "TICK",
         "symbol": symbol,
@@ -192,6 +206,30 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"L?i WebSocket Client: {e}")
         connection_manager.disconnect(websocket)
 
+
+# Trong main.py
+@app.post("/trade/analyze")
+async def get_trade_analysis(symbol: str, interval: str, trade_input: dict):
+    engine = engines.get(f"{symbol}_{interval}")
+    # L?y indicator hi?n t?i t? cache
+    current_inds = engine.ui_state['indicators']
+
+    # G?i AI Advisor
+    result = analyze_user_trade(
+        entry=trade_input['entry'],
+        tp=trade_input['tp'],
+        sl=trade_input['sl'],
+        position=trade_input['position'],
+        current_indicators=current_inds
+    )
+    return result
+
+
+@app.post("/trade/open-manual")
+async def open_manual_trade(symbol: str, interval: str, trade_data: dict):
+    engine = engines.get(f"{symbol}_{interval}")
+    engine.manual_sim.open_trade(trade_data)
+    return {"status": "success"}
 
 if __name__ == "__main__":
     # Ch?y server t?i port 8000

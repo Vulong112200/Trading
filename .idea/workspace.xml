@@ -4,85 +4,33 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="Trade_bot phase">
+    <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="Trade_bot phase-v2">
+      <change afterPath="$PROJECT_DIR$/ai_advisor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/simulator_manager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_15m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_15m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_30m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_30m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_15m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_15m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_30m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_30m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_15m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_15m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_30m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_30m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_15m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_15m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_30m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_30m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/signal_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/signal_engine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trade_history_BNBUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_BNBUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_history_BNBUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_BNBUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trade_history_BTCUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_BTCUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_history_BTCUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_BTCUSDT_5m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_history_ETHUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_ETHUSDT_1m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/trade_history_PAXGUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/trade_history_PAXGUSDT_1m.jsonl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BNBUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_BTCUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_ETHUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_log_PAXGUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BNBUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_BTCUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_ETHUSDT_5m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_15m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_1d.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_1h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_1m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_30m.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_4h.jsonl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/trade_logs_PAXGUSDT_5m.jsonl" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -201,7 +149,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776924350937</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Trade_bot phase-v2">
+      <option name="closed" value="true" />
+      <created>1776932582607</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1776932582608</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -225,7 +181,8 @@
     <MESSAGE value="First commit" />
     <MESSAGE value="All success_1" />
     <MESSAGE value="Trade_bot phase" />
-    <option name="LAST_COMMIT_MESSAGE" value="Trade_bot phase" />
+    <MESSAGE value="Trade_bot phase-v2" />
+    <option name="LAST_COMMIT_MESSAGE" value="Trade_bot phase-v2" />
   </component>
   <component name="XDebuggerManager">
     <watches-manager>
