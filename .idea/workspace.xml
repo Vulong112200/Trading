@@ -5,7 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e877d84f-c436-484a-a9fc-0bbe2f94a655" name="Changes" comment="All success_1">
+      <change afterPath="$PROJECT_DIR$/core_trading_system.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/quant_trading_tool.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/quant_trading_tool.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_layer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indicator_layer.py" beforeDir="false" afterPath="$PROJECT_DIR$/indicator_layer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_1m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BNBUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_BTCUSDT_1m.jsonl" afterDir="false" />
@@ -14,6 +21,8 @@
       <change beforePath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_ETHUSDT_5m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_1m.jsonl" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" beforeDir="false" afterPath="$PROJECT_DIR$/ml_training_data_PAXGUSDT_5m.jsonl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/signal_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/signal_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,12 +45,12 @@
     &quot;assignee&quot;: &quot;Vulong112200&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Vulong112200/Trading.git",
-    "accountId": "19b0db55-f329-4834-9611-46dc428d80a1"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Vulong112200/Trading.git&quot;,
+    &quot;accountId&quot;: &quot;1270e5a7-d051-4c8a-a24d-e707060bf571&quot;
   }
-}]]></component>
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -56,28 +65,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.indicator_layer.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.signal_engine.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "A:/Tools/Trading",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "tasks.servers"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.indicator_layer.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.signal_engine.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Tools/Trading2&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;tasks.servers&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Tools\Trading\quant_trading_tool\BK" />
@@ -86,7 +96,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-b63d5a1f7c97-b61e75351b1f-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.22158.340" />
+        <option value="bundled-python-sdk-164cda30dcd9-0af03a5fa574-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26830.99" />
       </set>
     </attachedChunks>
   </component>

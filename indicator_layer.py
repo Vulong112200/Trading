@@ -42,12 +42,14 @@ class IndicatorLayer:
                 IndicatorLayer.safe_assign(df, 'MACD', macd.iloc[:, 0])
                 IndicatorLayer.safe_assign(df, 'MACD_H', macd.iloc[:, 1])
                 IndicatorLayer.safe_assign(df, 'MACD_S', macd.iloc[:, 2])
+                df['MACD_Hist'] = df['MACD_H']
         except Exception as e:
             logger.warning(f"L?i MACD: {e}")
 
         # 3. Momentum
         try:
             df['RSI'] = ta.rsi(df['close'], length=14)
+            df['RSI_14'] = df['RSI']
             stoch = ta.stoch(df['high'], df['low'], df['close'])
             if stoch is not None and not stoch.empty:
                 IndicatorLayer.safe_assign(df, 'STOCH_K', stoch.iloc[:, 0])
@@ -61,7 +63,10 @@ class IndicatorLayer:
             if bb is not None and not bb.empty:
                 IndicatorLayer.safe_assign(df, 'BB_L', bb.iloc[:, 0])
                 IndicatorLayer.safe_assign(df, 'BB_U', bb.iloc[:, 2])
+                df['BB_Lower'] = df['BB_L']
+                df['BB_Upper'] = df['BB_U']
             df['ATR'] = ta.atr(df['high'], df['low'], df['close'], length=14)
+            df['ATR_14'] = df['ATR']
         except Exception as e:
             logger.warning(f"L?i Volatility: {e}")
 

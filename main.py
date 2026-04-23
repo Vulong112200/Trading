@@ -30,51 +30,54 @@ engines = {
 
 
 # --- CALLBACK X? L? D? LI?U T? WEBSOCKET BINANCE ---
-async def on_market_tick(symbol: str, interval: str, is_closed: bool):
+async def on_market_tick(symbol: str, interval: str, is_closed: bool, tick_data: dict):
     """
-    H?m n?y ???c g?i m?i khi Binance c? tick gi? m?i ho?c ??ng n?n.
-    N? th?c hi?n: T?nh to?n -> Sinh t?n hi?u -> G?i xu?ng Frontend.
+    tick_data = {"time": int, "open": float, "high": float, "low": float, "close": float}
     """
-    # 1. L?y d? li?u th? t? RAM Cache
-    df_raw = data_manager.cache.get(symbol, {}).get(interval)
-    if df_raw is None or df_raw.empty:
-        return
-
-    # 2. T?nh to?n ch? b?o (Indicator)
-    df_ind = indicator_layer.apply_indicators(df_raw)
-
-    # 3. L?y Engine t??ng ?ng ?? sinh t?n hi?u (Signal)
     engine_key = f"{symbol}_{interval}"
     engine = engines.get(engine_key)
     if not engine: return
 
-    analysis = engine.generate_signal(df_ind)
+    # 1. CONTINUOUS EXECUTION: Qu?t r?u n?n m?i tick ?? check TP/SL ngay l?p t?c
+    trade_status = engine.trade_sim.process_tick(
+        current_price=tick_data['close'],
+        high=tick_data['high'],
+        low=tick_data['low']
+    )
 
-    # 4. Chu?n b? d? li?u tick cho Chart
-    last_row = df_ind.iloc[-1]
-    # Quan tr?ng: Chuy?n timestamp sang gi?y (UNIX seconds)
-    tick_time = int(last_row['timestamp'].timestamp())
+    # 2. EVENT-DRIVEN PREDICTION: CH? ch?y khi N?N ??NG C?A (1m, 5m, 1h...)
+    if not is_closed:
+        # N?u n?n ch?a ??ng, ch? g?i tr?ng th?i trade/gi? hi?n t?i xu?ng UI ?? c?p nh?t chart
+        await connection_manager.broadcast_to_symbol(json.dumps({
+            "type": "TICK_UPDATE",
+            "candle": tick_data,
+            "trade": trade_status
+        }), symbol, interval)
+        return
 
-    tick_payload = {
-        "time": tick_time,
-        "open": float(last_row['open']),
-        "high": float(last_row['high']),
-        "low": float(last_row['low']),
-        "close": float(last_row['close']),
-        "EMA_9": float(last_row.get('EMA_9', 0)),
-        "EMA_21": float(last_row.get('EMA_21', 0))
-    }
+    # === T? ??Y TR? XU?NG CH? CH?Y 1 L?N/N?N ===
 
-    # 5. ??ng g?i d? li?u g?i xu?ng c?c Client ?ang k?t n?i
-    message = json.dumps({
-        "type": "TICK",
+    # T?nh Indicator
+    df_raw = data_manager.cache.get(symbol, {}).get(interval)
+    df_ind = indicator_layer.apply_indicators(df_raw)
+
+    # L?y Multi-Timeframe Context
+    mtf_context = {}
+    for tf in ["1m", "5m", "15m", "1h", "4h"]:  # L?y ?? c?c TF
+        df_tf = data_manager.cache.get(symbol, {}).get(tf)
+        if df_tf is not None and len(df_tf) > 0:
+            mtf_context[tf] = indicator_layer.apply_indicators(df_tf)
+
+    # Sinh T?n Hi?u & Ghi Log
+    analysis = engine.generate_signal(df_ind, mtf_context)
+
+    # Broadcast xu?ng UI
+    await connection_manager.broadcast_to_symbol(json.dumps({
+        "type": "CANDLE_CLOSE",
         "symbol": symbol,
-        "candle": tick_payload,
+        "candle": tick_data,
         "signal": analysis
-    })
-
-    # Broadcast t?i c?c tr?nh duy?t ?ang xem ??ng c?p ti?n n?y
-    await connection_manager.broadcast_to_symbol(message, symbol, interval)
+    }), symbol, interval)
 
 
 # G?n callback v?o data_manager
@@ -156,9 +159,18 @@ async def websocket_endpoint(websocket: WebSocket):
             if req.get("action") == "subscribe":
                 symbol = req['symbol']
                 interval = req['interval']
+                capital = req.get("capital")
 
                 # C?p nh?t l?a ch?n c?a Client
                 connection_manager.update_subscription(websocket, symbol, interval)
+
+                engine_key = f"{symbol}_{interval}"
+                engine = engines.get(engine_key)
+                if engine and capital is not None:
+                    try:
+                        engine.set_capital(float(capital))
+                    except Exception:
+                        logger.warning(f"Capital value invalid: {capital}")
 
                 # Ki?m tra v? n?p cache n?u c?n
                 if symbol not in data_manager.cache:

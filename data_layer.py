@@ -63,8 +63,23 @@ class DataLayer:
             self.cache[sym][interval] = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True).tail(MAX_CACHE_SIZE)
 
         # [S?A L?I QUAN TR?NG NH?T]: B?o cho main.py bi?t ?? ??y data xu?ng Frontend
+        # TRONG FILE data_layer.py (M?I)
         if self.on_tick_callback:
-            await self.on_tick_callback(sym, interval, k['x'])
+            kline = msg['k']
+
+            # ??ng g?i tick_data
+            tick_data = {
+                "time": int(kline['t'] / 1000),  # ??i ms sang gi?y (Unix Timestamp)
+                "open": float(kline['o']),
+                "high": float(kline['h']),
+                "low": float(kline['l']),
+                "close": float(kline['c'])
+            }
+
+            is_closed = kline['x']  # Tr?ng th?i n?n ??ng (True/False)
+
+            # G?i callback v?i ??y ?? 4 tham s?
+            await self.on_tick_callback(sym, interval, is_closed, tick_data)
 
 
 data_manager = DataLayer()

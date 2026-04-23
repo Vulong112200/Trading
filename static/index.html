@@ -2,43 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Quant Trading Terminal</title>
+    <title>Production Quant Terminal</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #D9D9D9; margin: 0; padding: 20px; display: flex; gap: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #D9D9D9; margin: 0; padding: 20px; display: flex; gap: 20px; height: 100vh; box-sizing: border-box; overflow: hidden; }
         .header-controls { margin-bottom: 15px; display: flex; gap: 15px; }
         select, input, button { background: #1E222D; color: white; border: 1px solid #474D57; padding: 8px; border-radius: 4px; font-size: 14px; outline: none; }
         button { cursor: pointer; font-weight: bold; transition: 0.2s;}
         button:hover { background: #2B3139; }
-        .btn-long { border-color: #00FF00; color: #00FF00; }
-        .btn-short { border-color: #FF0000; color: #FF0000; }
-        .btn-clear { border-color: #FFA500; color: #FFA500; }
 
-        #chart-container { flex: 3; height: 85vh; border: 1px solid #2B3139; background: #131722; position: relative; border-radius: 6px; overflow: hidden;}
-        #panel { flex: 1; background: #131722; padding: 20px; border-radius: 6px; border: 1px solid #2B3139; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: 85vh; box-sizing: border-box;}
-        h2, h3 { margin-top: 0; color: #E0E0E0; border-bottom: 1px solid #2B3139; padding-bottom: 10px; }
+        #chart-container { flex: 3; height: calc(100vh - 40px); border: 1px solid #2B3139; background: #131722; position: relative; border-radius: 6px; overflow: hidden;}
+        #panel { flex: 1; background: #131722; padding: 20px; border-radius: 6px; border: 1px solid #2B3139; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: calc(100vh - 40px); box-sizing: border-box;}
+
+        h2, h3 { margin-top: 0; color: #E0E0E0; border-bottom: 1px solid #2B3139; padding-bottom: 10px; font-size: 15px; text-transform: uppercase;}
         .metric { background: #1E222D; padding: 15px; border-radius: 6px; border: 1px solid #2B3139; }
 
-        .score-buy { color: #00FF00; font-weight: bold; font-size: 22px;}
-        .score-sell { color: #FF0000; font-weight: bold; font-size: 22px;}
-        .score-hold { color: #FFA500; font-weight: bold; font-size: 22px;}
+        .score-buy { color: #00FF00; font-weight: bold; font-size: 18px;}
+        .score-sell { color: #FF0000; font-weight: bold; font-size: 18px;}
+        .score-hold { color: #FFA500; font-weight: bold; font-size: 18px;}
 
         .price-text { font-size: 28px; font-weight: bold; color: #FCD535; margin-top: 5px; }
         .val-green { color: #00FF00; font-weight: bold; }
         .val-red { color: #FF0000; font-weight: bold; }
-        .val-yellow { color: #FCD535; font-weight: bold; }
-        .info-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; align-items: center;}
+        .info-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; align-items: center;}
         .info-label { color: #848E9C; }
 
-        .chart-legend {
-            position: absolute; top: 12px; left: 12px; z-index: 10;
-            font-size: 13px; background: rgba(19, 23, 34, 0.85);
-            padding: 10px; border-radius: 6px; border: 1px solid #2B3139;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .legend-static {
-            margin-top: 10px; font-size: 12px; border-top: 1px solid #474D57;
-            padding-top: 8px; line-height: 1.6; color: #B0C4DE;
-        }
+        .chart-legend { position: absolute; top: 12px; left: 12px; z-index: 10; font-size: 13px; background: rgba(19, 23, 34, 0.85); padding: 10px; border-radius: 6px; border: 1px solid #2B3139; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; margin-top: 5px; }
+        th { color: #848E9C; padding-bottom: 8px; font-weight: normal; border-bottom: 1px solid #2B3139;}
+        td { padding: 6px 0; border-bottom: 1px solid #2B3139;}
+
+        /* CSS Bổ sung cho thanh tiến trình Indicator Weights */
+        .weight-bar { background: #2B3139; height: 5px; border-radius: 3px; margin-top: 4px; overflow: hidden; width: 100%; }
+        .weight-fill { background: #FCD535; height: 100%; transition: width 0.3s ease;}
+
+        /* CSS Bổ sung cho Hệ thống Notification (Toast) */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #1E222D; border-left: 4px solid #FCD535; padding: 12px 16px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); color: #D9D9D9; font-size: 13px; min-width: 250px; animation: slideIn 0.3s ease-out forwards; white-space: pre-line; line-height: 1.4;}
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
                 <option value="BTCUSDT">BTC / USDT</option>
                 <option value="ETHUSDT">ETH / USDT</option>
                 <option value="BNBUSDT">BNB / USDT</option>
-                <option value="PAXGUSDT">PAXG / USDT (Gold Proxy)</option>
+                <option value="PAXGUSDT">PAXG / USDT</option>
             </select>
             <select id="intervalSelect">
                 <option value="1m">1 Minute</option>
@@ -56,93 +56,121 @@
                 <option value="15m">15 Minutes</option>
                 <option value="30m">30 Minutes</option>
                 <option value="1h">1 Hour</option>
-                <option value="4h">4 Hours</option>
-                <option value="1d">1 Day</option>
             </select>
             <span id="ws-status" style="margin-top: 8px; color: #FFA500; font-weight: bold;">Connecting WS...</span>
         </div>
         <div id="chart-container">
             <div class="chart-legend">
-                <div id="legend-dynamic">
-                    <span style="color: #FFA500;">Loading Data...</span>
-                </div>
-                <div class="legend-static">
-                    <span style="color:#2962FF; font-weight:bold;">── EMA 9:</span> Tín hiệu Nhanh<br>
-                    <span style="color:#FF6D00; font-weight:bold;">── EMA 21:</span> Tín hiệu Chậm (Xu hướng)<br>
-                    <span style="color:#B228FF; font-weight:bold;">- - Target:</span> AI Dự phóng giá mục tiêu
-                </div>
+                <div id="legend-dynamic"><span style="color: #FFA500;">Loading Data...</span></div>
             </div>
         </div>
     </div>
 
     <div id="panel">
-        <h2>System Terminal</h2>
+        <h2>Production Quant Terminal</h2>
 
         <div class="metric">
-            <div class="info-label">Current Price</div>
-            <div class="price-text" id="price">Loading...</div>
+            <div class="info-label">Live Market Price</div>
+            <div class="price-text" id="price">---</div>
         </div>
 
         <div class="metric">
-            <h3>My Manual Position</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="number" id="manual-entry" placeholder="Entry Price" style="width: 100px;">
-                <button class="btn-long" onclick="setManualTrade('LONG')">LONG</button>
-                <button class="btn-short" onclick="setManualTrade('SHORT')">SHORT</button>
-                <button class="btn-clear" onclick="setManualTrade('NONE')">CLEAR</button>
-            </div>
+            <h3>1. Master Signal Engine</h3>
             <div class="info-row">
-                <span class="info-label">Current State:</span>
-                <strong id="my-state">NONE</strong>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Live PnL:</span>
-                <strong id="my-pnl" style="font-size: 18px;">0.00%</strong>
-            </div>
-        </div>
-
-        <div class="metric">
-            <h3>Bot Signal Engine</h3>
-            <div class="info-row">
-                <span class="info-label">Action:</span>
+                <span class="info-label">AI Action:</span>
                 <span id="action" class="score-hold">WAITING...</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Score (EMA Smooth):</span>
+                <span class="info-label">Momentum Score:</span>
                 <strong id="score">0.0</strong>
             </div>
             <div class="info-row">
-                <span class="info-label">Est. Time to Entry:</span>
-                <strong id="eta-entry" style="color: #848E9C;">Calculating...</strong>
+                <span class="info-label">Confidence:</span>
+                <strong id="confidence">0%</strong>
             </div>
-            <div class="info-row" style="flex-direction: column; margin-top: 12px;">
-                <span class="info-label">AI Reason:</span>
-                <span id="reason" style="color: #B0C4DE; margin-top: 4px; font-style: italic;">"Warming up data..."</span>
+            <div class="info-row">
+                <span class="info-label">Model Win Rate:</span>
+                <strong id="winrate" class="val-green">0%</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span id="reason" style="color: #B0C4DE; font-style: italic;">"Warming up..."</span>
             </div>
         </div>
 
         <div class="metric">
-            <h3>Volatility Prediction</h3>
+            <h3>🧠 Adaptive Indicator Weights</h3>
+            <div id="weights-container">
+                <span style="color: #848E9C; font-style: italic; font-size: 12px;">Waiting for model evaluation...</span>
+            </div>
+        </div>
+
+        <div class="metric">
+            <h3>2. Dynamic Prediction Range</h3>
             <div class="info-row">
-                <span class="info-label">Trend Direction:</span>
-                <strong id="pred-dir" style="font-size: 16px;">UNKNOWN</strong>
+                <span class="info-label">Direction:</span>
+                <strong id="pred-dir" style="font-size: 14px;">UNKNOWN</strong>
             </div>
             <div class="info-row">
-                <span class="info-label">Target (Mid):</span>
+                <span class="info-label">Target (Mid-Price):</span>
                 <strong id="pred-target" style="color:#B228FF;">N/A</strong>
             </div>
             <div class="info-row">
-                <span class="info-label">Expected Range:</span>
-                <span id="pred-range">N/A - N/A</span>
+                <span class="info-label">Safe Zone (Min - Max):</span>
+                <span id="pred-range">N/A</span>
+            </div>
+        </div>
+
+        <div class="metric" style="border-color: #FCD535;">
+            <h3 style="color: #FCD535;">3. Trade Execution Engine</h3>
+            <div class="info-row" style="margin-bottom: 8px; border-bottom: 1px solid #2B3139; padding-bottom: 8px;">
+                <span class="info-label">Current Capital:</span>
+                <strong id="trade-capital" style="color: #FCD535; font-size: 15px;">---</strong>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Position Status:</span>
+                <strong id="trade-status">NONE</strong>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Position Size:</span>
+                <span id="trade-size">---</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Entry Price:</span>
+                <span id="trade-entry">---</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Take Profit (TP):</span>
+                <span id="trade-tp" class="val-green">---</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Stop Loss (SL):</span>
+                <span id="trade-sl" class="val-red">---</span>
+            </div>
+            <div class="info-row" style="margin-top: 8px;">
+                <span class="info-label">Live Profit:</span>
+                <strong id="trade-profit" style="font-size: 15px;">---</strong>
             </div>
         </div>
 
         <div class="metric">
-            <h3>Live Forward Testing</h3>
-            <table id="tracker-table" style="font-size: 13px; text-align: center; width: 100%;">
-                </table>
+            <h3>📜 Trade History</h3>
+            <table id="trade-history-table">
+                <tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>
+                <tr><td colspan="6" style="color:#848E9C; padding-top:10px;">No closed trades yet</td></tr>
+            </table>
+        </div>
+
+        <div class="metric">
+            <h3>4. Forward Testing (Real-time)</h3>
+            <table id="tracker-table">
+                <tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>
+            </table>
         </div>
     </div>
+
+    <div id="toast-container"></div>
 
     <script type="module">
         import { createChart, CandlestickSeries, LineSeries, CrosshairMode } from 'https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.mjs';
@@ -161,32 +189,17 @@
         const ema21Series = chart.addSeries(LineSeries, { color: '#FF6D00', lineWidth: 1.5 });
         const predictionSeries = chart.addSeries(LineSeries, { color: '#B228FF', lineWidth: 2, lineStyle: 2 });
 
-        window.myTrade = { state: 'NONE', entry: 0 };
-        window.setManualTrade = function(state) {
-            const entryVal = parseFloat(document.getElementById('manual-entry').value);
-            if (state !== 'NONE' && (isNaN(entryVal) || entryVal <= 0)) {
-                alert("Vui lòng nhập giá Entry hợp lệ!"); return;
-            }
-            window.myTrade.state = state;
-            window.myTrade.entry = state === 'NONE' ? 0 : entryVal;
-
-            const stateEl = document.getElementById('my-state');
-            stateEl.innerText = state;
-            stateEl.className = state === 'LONG' ? 'val-green' : (state === 'SHORT' ? 'val-red' : '');
-
-            if (state === 'NONE') {
-                document.getElementById('manual-entry').value = "";
-                document.getElementById('my-pnl').innerText = "0.00%";
-                document.getElementById('my-pnl').className = "";
-            }
-        };
+        // Biến lưu trữ các đường vẽ (Price Lines) trên Chart
+        let entryLine = null;
+        let tpLine = null;
+        let slLine = null;
 
         let ws;
         function connectWS() {
             ws = new WebSocket(`ws://${window.location.host}/ws/frontend`);
 
             ws.onopen = () => {
-                document.getElementById('ws-status').innerText = '🟢 SERVER ONLINE';
+                document.getElementById('ws-status').innerText = '🟢 SYSTEM ONLINE';
                 document.getElementById('ws-status').style.color = '#00FF00';
                 requestData();
             };
@@ -201,109 +214,209 @@
                         ema9Series.setData(localData.map(d => ({time: d.time, value: d.EMA_9})));
                         ema21Series.setData(localData.map(d => ({time: d.time, value: d.EMA_21})));
                         predictionSeries.setData([]);
-
-                        document.getElementById('legend-dynamic').innerHTML = `<strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | Sync Complete`;
                     } catch (e) {}
                 }
-                else if (res.type === "TICK") {
+                else if (res.type === "TICK" || res.type === "CANDLE_CLOSE" || res.type === "TICK_UPDATE") {
                     try {
                         const currentPrice = res.candle.close;
                         const localTime = res.candle.time - tzOffsetSeconds;
 
+                        // Cập nhật nến và EMA liên tục
                         candleSeries.update({...res.candle, time: localTime});
                         ema9Series.update({time: localTime, value: res.candle.EMA_9});
                         ema21Series.update({time: localTime, value: res.candle.EMA_21});
-
-                        document.getElementById('legend-dynamic').innerHTML = `
-                            <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
-                            <br><span style="color:#2962FF">EMA 9: ${(res.candle.EMA_9 || 0).toFixed(2)}</span>
-                            <br><span style="color:#FF6D00">EMA 21: ${(res.candle.EMA_21 || 0).toFixed(2)}</span>
-                        `;
-
-                        if (window.myTrade.state !== 'NONE') {
-                            let pnl = 0;
-                            if (window.myTrade.state === 'LONG') pnl = (currentPrice - window.myTrade.entry) / window.myTrade.entry * 100;
-                            if (window.myTrade.state === 'SHORT') pnl = (window.myTrade.entry - currentPrice) / window.myTrade.entry * 100;
-
-                            const pnlEl = document.getElementById('my-pnl');
-                            pnlEl.innerText = pnl.toFixed(2) + "%";
-                            pnlEl.className = pnl > 0 ? 'val-green' : 'val-red';
-                        }
-
-                        // LẤY DỮ LIỆU TỪ BACKEND
-                        const dataSignal = res.signal;
-
-                        if (dataSignal && dataSignal.prediction && dataSignal.prediction.target_mid > 0) {
-                            const intervalFactor = document.getElementById('intervalSelect').value === '1m' ? 60 : 300;
-                            const futureTime = localTime + (intervalFactor * 5);
-                            predictionSeries.setData([
-                                { time: localTime, value: currentPrice },
-                                { time: futureTime, value: dataSignal.prediction.target_mid }
-                            ]);
-
-                            const predDirEl = document.getElementById('pred-dir');
-                            predDirEl.innerText = dataSignal.prediction.direction;
-                            predDirEl.className = dataSignal.prediction.direction === "BULLISH" ? "val-green" : "val-red";
-                        }
-
                         document.getElementById('price').innerText = currentPrice.toFixed(2);
 
-                        if (dataSignal) {
-                            // SỬA LỖI BUG UI TẠI ĐÂY: Không lồng "dataSignal.signal" nữa
-                            const sig = dataSignal;
+                        const payload = res.signal;
 
-                            document.getElementById('action').innerText = sig.action;
-                            document.getElementById('action').className = sig.action.includes('BUY') ? 'score-buy' : (sig.action.includes('SELL') ? 'score-sell' : 'score-hold');
-                            document.getElementById('score').innerText = sig.score;
-                            document.getElementById('reason').innerText = `"${sig.reason}"`;
+                        if (payload) {
+                            // XỬ LÝ NOTIFICATIONS (TOAST)
+                            if (payload.notifications && payload.notifications.length > 0) {
+                                const toastContainer = document.getElementById('toast-container');
+                                payload.notifications.forEach(msg => {
+                                    const toast = document.createElement('div');
+                                    toast.className = 'toast';
+                                    toast.style.borderLeftColor = msg.includes('🟢') ? '#00FF00' : (msg.includes('🔴') ? '#FF0000' : '#FCD535');
+                                    toast.innerText = msg;
+                                    toastContainer.appendChild(toast);
 
-                            const absScore = Math.abs(sig.score);
-                            const etaEl = document.getElementById('eta-entry');
-                            const is1m = document.getElementById('intervalSelect').value === '1m';
-
-                            if (sig.action === "BUY" || sig.action === "SELL") {
-                                etaEl.innerText = "Order Triggered!";
-                                etaEl.className = "val-green";
-                            } else if (absScore >= 0.35) {
-                                etaEl.innerText = "Confirming (Wait 1-3 candles)";
-                                etaEl.className = "val-yellow";
-                            } else if (absScore >= 0.20) {
-                                etaEl.innerText = is1m ? "Approaching (Wait 3-10 mins)" : "Approaching (Wait 15-45 mins)";
-                                etaEl.className = "val-green";
-                            } else {
-                                etaEl.innerText = "Sideways Market (> 15 mins)";
-                                etaEl.style.color = "#848E9C";
-                                etaEl.className = "";
+                                    // Tự động xóa thông báo sau 6 giây
+                                    setTimeout(() => {
+                                        toast.style.opacity = '0';
+                                        setTimeout(() => toast.remove(), 300);
+                                    }, 6000);
+                                });
                             }
 
-                            if(sig.prediction){
-                                document.getElementById('pred-target').innerText = sig.prediction.target_mid.toFixed(2);
-                                document.getElementById('pred-range').innerText = `${sig.prediction.range.min.toFixed(2)} - ${sig.prediction.range.max.toFixed(2)}`;
+                            // Cập nhật tia dự phóng
+                            if (payload.prediction && payload.prediction.mid_price) {
+                                const intervalStr = document.getElementById('intervalSelect').value;
+                                let seconds = 60;
+                                if(intervalStr.includes('m')) seconds = parseInt(intervalStr) * 60;
+                                if(intervalStr.includes('h')) seconds = parseInt(intervalStr) * 3600;
+
+                                const futureTime = localTime + (seconds * 5);
+                                predictionSeries.setData([
+                                    { time: localTime, value: currentPrice },
+                                    { time: futureTime, value: payload.prediction.mid_price }
+                                ]);
+
+                                const dirEl = document.getElementById('pred-dir');
+                                dirEl.innerText = payload.prediction.direction;
+                                dirEl.className = payload.prediction.direction === "BULL" || payload.prediction.direction === "BULLISH" ? "val-green" : "val-red";
+
+                                document.getElementById('pred-target').innerText = payload.prediction.mid_price.toFixed(2);
+
+                                // Parse object an toàn
+                                let rObj = payload.prediction.range;
+                                let rangeTxt = typeof rObj === 'object' ? `${rObj.min.toFixed(2)} - ${rObj.max.toFixed(2)}` : rObj;
+                                document.getElementById('pred-range').innerText = `[${rangeTxt}]`;
                             }
 
-                            // RENDER BẢNG TRACKER TỪ MẢNG RECENT_RESULTS (Được fix lỗi trống)
-                            const trackerList = dataSignal.tracker;
+                            // Cập nhật Master Signal Engine
+                            const actEl = document.getElementById('action');
+                            actEl.innerText = payload.action || payload.signal;
+                            actEl.className = actEl.innerText.includes('BUY') ? 'score-buy' : (actEl.innerText.includes('SELL') ? 'score-sell' : 'score-hold');
+
+                            if (payload.score !== undefined) document.getElementById('score').innerText = payload.score.toFixed(3);
+                            if (payload.confidence !== undefined) document.getElementById('confidence').innerText = (payload.confidence * 100).toFixed(1) + "%";
+                            if (payload.reason) document.getElementById('reason').innerText = payload.reason;
+
+                            // Cập nhật Win Rate
+                            if (payload.winrate !== undefined) {
+                                document.getElementById('winrate').innerText = payload.winrate + "%";
+                            }
+
+                            // Cập nhật Adaptive Weights
+                            if (payload.weights) {
+                                let wHtml = "";
+                                for (const [key, val] of Object.entries(payload.weights)) {
+                                    let pct = (val * 100).toFixed(1);
+                                    wHtml += `
+                                    <div style="margin-top: 6px;">
+                                        <div class="info-row" style="margin-top: 0;">
+                                            <span class="info-label">${key.toUpperCase()}</span>
+                                            <span>${pct}%</span>
+                                        </div>
+                                        <div class="weight-bar">
+                                            <div class="weight-fill" style="width: ${pct}%"></div>
+                                        </div>
+                                    </div>`;
+                                }
+                                document.getElementById('weights-container').innerHTML = wHtml;
+                            }
+
+                            // CẬP NHẬT: Trade Engine & Quản Lý Vốn
+                            const trade = payload.trade;
+                            if (trade) {
+                                // Vốn (Capital)
+                                if (trade.capital !== undefined) {
+                                    document.getElementById('trade-capital').innerText = trade.capital.toFixed(2) + " $";
+                                }
+
+                                const statusEl = document.getElementById('trade-status');
+                                statusEl.innerText = trade.position_status;
+                                if(trade.position_status === 'OPEN') statusEl.className = 'val-green';
+                                else if (trade.position_status === 'PENDING') statusEl.className = 'val-yellow';
+                                else statusEl.className = '';
+
+                                document.getElementById('trade-entry').innerText = trade.entry ? trade.entry.toFixed(2) : "---";
+                                document.getElementById('trade-tp').innerText = trade.tp ? trade.tp.toFixed(2) : "---";
+                                document.getElementById('trade-sl').innerText = trade.sl ? trade.sl.toFixed(2) : "---";
+
+                                // Khối lượng (Size)
+                                document.getElementById('trade-size').innerText = trade.position_size > 0 ? trade.position_size.toFixed(5) : "---";
+
+                                // Live Profit ($)
+                                const profitEl = document.getElementById('trade-profit');
+                                if (trade.position_status !== 'NONE' && trade.profit_usd !== undefined) {
+                                    let sign = trade.profit_usd >= 0 ? "+" : "";
+                                    profitEl.innerText = `${sign}${trade.profit_usd.toFixed(2)} $ (${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)}%)`;
+                                    profitEl.className = trade.profit_usd >= 0 ? 'val-green' : 'val-red';
+                                } else {
+                                    profitEl.innerText = "---";
+                                    profitEl.className = "";
+                                }
+
+                                // Logic vẽ đường kẻ ngang trên Chart
+                                if (trade.position_status !== 'NONE' && trade.entry) {
+                                    if (!entryLine) entryLine = candleSeries.createPriceLine({price: trade.entry, color: '#FCD535', lineWidth: 2, title: 'ENTRY'});
+                                    else entryLine.applyOptions({price: trade.entry});
+
+                                    if (trade.tp) {
+                                        if (!tpLine) tpLine = candleSeries.createPriceLine({price: trade.tp, color: '#00FF00', lineWidth: 2, title: 'TP'});
+                                        else tpLine.applyOptions({price: trade.tp});
+                                    }
+                                    if (trade.sl) {
+                                        if (!slLine) slLine = candleSeries.createPriceLine({price: trade.sl, color: '#FF0000', lineWidth: 2, title: 'SL'});
+                                        else slLine.applyOptions({price: trade.sl});
+                                    }
+                                } else {
+                                    // Xóa lines nếu không có lệnh
+                                    if (entryLine) { candleSeries.removePriceLine(entryLine); entryLine = null; }
+                                    if (tpLine) { candleSeries.removePriceLine(tpLine); tpLine = null; }
+                                    if (slLine) { candleSeries.removePriceLine(slLine); slLine = null; }
+                                }
+                            }
+
+                            // Render Trade History Table (Đã thêm cột Profit $)
+                            if (payload.trade_history && payload.trade_history.length > 0) {
+                                let hHtml = `<tr><th>Type</th><th>Entry</th><th>Exit</th><th>PnL%</th><th>Profit</th><th>Result</th></tr>`;
+                                payload.trade_history.forEach(h => {
+                                    let col = h.result === "WIN" ? "val-green" : (h.result === "LOSS" ? "val-red" : "");
+                                    let typeCol = h.position === "LONG" || h.type === "LONG" ? "val-green" : "val-red";
+                                    let posText = h.position || h.type || "---";
+                                    let profitText = h.profit_usd ? (h.profit_usd > 0 ? '+' : '') + h.profit_usd.toFixed(2) + '$' : '---';
+
+                                    hHtml += `<tr>
+                                        <td class="${typeCol}">${posText.substring(0,4)}</td>
+                                        <td>${h.entry_price ? h.entry_price.toFixed(1) : h.entry.toFixed(1)}</td>
+                                        <td>${h.exit_price ? h.exit_price.toFixed(1) : '---'}</td>
+                                        <td class="${col}">${h.pnl ? h.pnl.toFixed(2) : 0.00}%</td>
+                                        <td class="${col}">${profitText}</td>
+                                        <td class="${col}">${h.result}</td>
+                                    </tr>`;
+                                });
+                                document.getElementById('trade-history-table').innerHTML = hHtml;
+                            }
+
+                            // Cập nhật UI Bảng 4: Tracker (Forward Testing)
+                            const trackerList = payload.tracker;
                             if (trackerList && trackerList.length > 0) {
-                                let tHtml = `<tr style="color: #848E9C;"><th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
+                                let tHtml = `<tr><th>Time</th><th>Trend</th><th>Target Range</th><th>Actual</th><th>Result</th></tr>`;
                                 trackerList.forEach(item => {
-                                    let resColor = item.result === 'WIN' ? 'color: #00FF00' : (item.result === 'LOSS' ? 'color: #FF0000' : 'color: #FFA500');
-                                    let dirColor = item.type === 'BULLISH' ? 'color: #00FF00' : 'color: #FF0000';
+                                    let timeStr = item.time;
+                                    if (timeStr.includes("T")) {
+                                        let dateObj = new Date(timeStr);
+                                        timeStr = dateObj.getHours().toString().padStart(2, '0') + ":" + dateObj.getMinutes().toString().padStart(2, '0');
+                                    }
+
+                                    let resColor = item.final_result === 'WIN' ? '#00FF00' : (item.final_result === 'LOSS' ? '#FF0000' : '#FFA500');
+                                    let dirColor = item.direction.includes('BULL') ? '#00FF00' : '#FF0000';
+
+                                    let rangeTxt = typeof item.range === 'object' ? `${item.range.min.toFixed(1)} - ${item.range.max.toFixed(1)}` : item.range;
+                                    let actTxt = item.actual_price > 0 ? item.actual_price.toFixed(2) : "---";
 
                                     tHtml += `<tr>
-                                        <td>${item.time}</td>
-                                        <td style="${dirColor}">${item.type.substring(0,4)}</td>
-                                        <td>${item.target}</td>
-                                        <td>${item.actual}</td>
-                                        <td style="${resColor}; font-weight: bold;">${item.result}</td>
+                                        <td>${timeStr}</td>
+                                        <td style="color:${dirColor}">${item.direction}</td>
+                                        <td>${rangeTxt}</td>
+                                        <td>${actTxt}</td>
+                                        <td style="color:${resColor}; font-weight: bold;">${item.final_result}</td>
                                     </tr>`;
                                 });
                                 document.getElementById('tracker-table').innerHTML = tHtml;
-                            } else {
-                                document.getElementById('tracker-table').innerHTML = `<tr style="color: #848E9C;"><th>Time</th><th>Type</th><th>Target Range</th><th>Actual</th><th>Result</th></tr><tr><td colspan="5" style="padding: 10px;">Waiting for first evaluation (5 candles)...</td></tr>`;
                             }
+
+                            // Cập nhật Dynamic Legend
+                            document.getElementById('legend-dynamic').innerHTML = `
+                                <strong style="font-size:15px; color:#fff;">${res.symbol}</strong> | C: <strong>${currentPrice.toFixed(2)}</strong>
+                                <br><span style="color:#2962FF">EMA 9: ${(res.candle.EMA_9 || 0).toFixed(2)}</span>
+                                <br><span style="color:#FF6D00">EMA 21: ${(res.candle.EMA_21 || 0).toFixed(2)}</span>
+                            `;
                         }
                     } catch (err) {
-                        console.error("Lỗi Render UI: ", err);
+                        console.error("Render Update Failed: ", err);
                     }
                 }
             };
@@ -314,11 +427,11 @@
             if(ws && ws.readyState === WebSocket.OPEN) {
                 const sym = document.getElementById('symbolSelect').value;
                 const tf = document.getElementById('intervalSelect').value;
-
-                document.getElementById('legend-dynamic').innerHTML = `<span style="color: #FFA500;">Switching to ${sym}...</span>`;
+                document.getElementById('legend-dynamic').innerHTML = `<span style="color: #FFA500;">Switching Data...</span>`;
                 ws.send(JSON.stringify({action: "subscribe", symbol: sym, interval: tf}));
             }
         }
+
         document.getElementById('symbolSelect').addEventListener('change', requestData);
         document.getElementById('intervalSelect').addEventListener('change', requestData);
 
